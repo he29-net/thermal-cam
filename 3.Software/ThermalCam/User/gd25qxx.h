@@ -45,7 +45,7 @@ OF SUCH DAMAGE.
 #define  SPI_FLASH_CS_LOW()            gpio_bit_reset(GPIOA, GPIO_PIN_4)
 #define  SPI_FLASH_CS_HIGH()           gpio_bit_set(GPIOA, GPIO_PIN_4)
 
-//Ö¸Áî±í
+//æŒ‡ä»¤è¡¨
 #define W25X_WriteEnable		0x06 
 #define W25X_WriteDisable		0x04 
 #define W25X_ReadStatusReg		0x05 
@@ -64,17 +64,17 @@ OF SUCH DAMAGE.
 #define W25X_JedecDeviceID		0x9F 
 
 void SPI_Flash_Init(void);
-uint16_t  SPI_Flash_ReadID(void);  	    //¶ÁÈ¡FLASH ID
-uint8_t	 SPI_Flash_ReadSR(void);        //¶ÁÈ¡×´Ì¬¼Ä´æÆ÷ 
-void SPI_FLASH_Write_SR(uint8_t sr);  	//Ğ´×´Ì¬¼Ä´æÆ÷
-void SPI_FLASH_Write_Enable(void);  //Ğ´Ê¹ÄÜ 
-void SPI_FLASH_Write_Disable(void);	//Ğ´±£»¤
-void SPI_Flash_Read(uint8_t* pBuffer,uint32_t ReadAddr,uint16_t NumByteToRead);   //¶ÁÈ¡flash
-void SPI_Flash_Write(uint8_t* pBuffer,uint32_t WriteAddr,uint16_t NumByteToWrite);//Ğ´Èëflash
-void SPI_Flash_Erase_Chip(void);    	  //ÕûÆ¬²Á³ı
-void SPI_Flash_Erase_Sector(uint32_t Dst_Addr);//ÉÈÇø²Á³ı
-void SPI_Flash_Wait_Busy(void);           //µÈ´ı¿ÕÏĞ
-void SPI_Flash_PowerDown(void);           //½øÈëµôµçÄ£Ê½
-void SPI_Flash_WAKEUP(void);			  //»½ĞÑ
+uint16_t  SPI_Flash_ReadID(void);  	    //è¯»å–FLASH ID
+uint8_t	 SPI_Flash_ReadSR(void);        //è¯»å–çŠ¶æ€å¯„å­˜å™¨ 
+void SPI_FLASH_Write_SR(uint8_t sr);  	//å†™çŠ¶æ€å¯„å­˜å™¨
+void SPI_FLASH_Write_Enable(void);  //å†™ä½¿èƒ½ 
+void SPI_FLASH_Write_Disable(void);	//å†™ä¿æŠ¤
+void SPI_Flash_Read(uint8_t* pBuffer,uint32_t ReadAddr,uint16_t NumByteToRead);   //è¯»å–flash
+void SPI_Flash_Write(uint8_t* pBuffer,uint32_t WriteAddr,uint16_t NumByteToWrite);//å†™å…¥flash
+void SPI_Flash_Erase_Chip(void);    	  //æ•´ç‰‡æ“¦é™¤
+void SPI_Flash_Erase_Sector(uint32_t Dst_Addr);//æ‰‡åŒºæ“¦é™¤
+void SPI_Flash_Wait_Busy(void);           //ç­‰å¾…ç©ºé—²
+void SPI_Flash_PowerDown(void);           //è¿›å…¥æ‰ç”µæ¨¡å¼
+void SPI_Flash_WAKEUP(void);			  //å”¤é†’
 
 #endif /* GD25QXX_H */

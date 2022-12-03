@@ -1,10 +1,10 @@
 #include "TIM.h"
 
 /**********************************************************************************************************
-*	º¯ Êı Ãû£ºTIM1_Encoder_Init
-*	¹¦ÄÜËµÃ÷£º±àÂëĞıÅ¥³õÊ¼»¯
-*	ĞÎ    ²Î£º
-*	·µ »Ø Öµ£º
+*	å‡½ æ•° åï¼šTIM1_Encoder_Init
+*	åŠŸèƒ½è¯´æ˜ï¼šç¼–ç æ—‹é’®åˆå§‹åŒ–
+*	å½¢    å‚ï¼š
+*	è¿” å› å€¼ï¼š
 **********************************************************************************************************/ 
 void TIM1_Encoder_Init(void)  //TIM1   ENC_A-PA0   ENC_B-PA1
 {
@@ -38,10 +38,10 @@ void TIM1_Encoder_Init(void)  //TIM1   ENC_A-PA0   ENC_B-PA1
 }
 
 /**********************************************************************************************************
-*	º¯ Êı Ãû£ºACSig_In_Capture_Init
-*	¹¦ÄÜËµÃ÷£º¹ıÁã²¨ĞÎÎª100Hz£¬10ms£¬¸ßµçÆ½Îª500usµÄ·½²¨¡£
-*	ĞÎ    ²Î£º
-*	·µ »Ø Öµ£º
+*	å‡½ æ•° åï¼šACSig_In_Capture_Init
+*	åŠŸèƒ½è¯´æ˜ï¼šè¿‡é›¶æ³¢å½¢ä¸º100Hzï¼Œ10msï¼Œé«˜ç”µå¹³ä¸º500usçš„æ–¹æ³¢ã€‚
+*	å½¢    å‚ï¼š
+*	è¿” å› å€¼ï¼š
 **********************************************************************************************************/ 
 void ACSig_In_Capture_Init(void)  //TIM2_CH0    AC_SIG-PB4
 {
@@ -52,7 +52,7 @@ void ACSig_In_Capture_Init(void)  //TIM2_CH0    AC_SIG-PB4
     rcu_periph_clock_enable(RCU_GPIOB);
     rcu_periph_clock_enable(RCU_AF);
 
-	//ÖØÓ³Éä
+	//é‡æ˜ å°„
 	gpio_pin_remap_config(GPIO_TIMER2_PARTIAL_REMAP, ENABLE);	   
     gpio_init(GPIOB, GPIO_MODE_IN_FLOATING, GPIO_OSPEED_50MHZ, GPIO_PIN_4);	
 	
@@ -77,7 +77,7 @@ void ACSig_In_Capture_Init(void)  //TIM2_CH0    AC_SIG-PB4
 
     /* TIMER2  configuration */
     /* TIMER2 CH0 input capture configuration */
-    timer_icinitpara.icpolarity  = TIMER_IC_POLARITY_RISING;     //ÉÏÉıÑØ
+    timer_icinitpara.icpolarity  = TIMER_IC_POLARITY_RISING;     //ä¸Šå‡æ²¿
     timer_icinitpara.icselection = TIMER_IC_SELECTION_DIRECTTI;
     timer_icinitpara.icprescaler = TIMER_IC_PSC_DIV1;
     timer_icinitpara.icfilter    = 0x4;
@@ -95,10 +95,10 @@ void ACSig_In_Capture_Init(void)  //TIM2_CH0    AC_SIG-PB4
 }
 
 /**********************************************************************************************************
-*	º¯ Êı Ãû£ºPWMOut_LCD_BK_Init
-*	¹¦ÄÜËµÃ÷£ºTFT±³¹âPWM³õÊ¼»¯
-*	ĞÎ    ²Î£º
-*	·µ »Ø Öµ£º
+*	å‡½ æ•° åï¼šPWMOut_LCD_BK_Init
+*	åŠŸèƒ½è¯´æ˜ï¼šTFTèƒŒå…‰PWMåˆå§‹åŒ–
+*	å½¢    å‚ï¼š
+*	è¿” å› å€¼ï¼š
 **********************************************************************************************************/ 
 void PWMOut_LCD_BK_Init(void)  //TIM4_CH2    LCD_BK-PA2
 {
@@ -127,18 +127,18 @@ void PWMOut_LCD_BK_Init(void)  //TIM4_CH2    LCD_BK-PA2
     timer_initpara.prescaler         = 53;  //TIMER1CLK = SystemCoreClock / 54 = 2MHz
     timer_initpara.alignedmode       = TIMER_COUNTER_EDGE;
     timer_initpara.counterdirection  = TIMER_COUNTER_UP;
-    timer_initpara.period            = 99;  // 2MHz/100=20KHz  LCD±³¹âÆµÂÊ20K
+    timer_initpara.period            = 99;  // 2MHz/100=20KHz  LCDèƒŒå…‰é¢‘ç‡20K
     timer_initpara.clockdivision     = TIMER_CKDIV_DIV1;
     timer_initpara.repetitioncounter = 0;
     timer_init(TIMER4,&timer_initpara);
 
     /* CH2 configuration in PWM mode1 */
-    timer_ocintpara.ocpolarity   = TIMER_OC_POLARITY_LOW;       //Í¨µÀÊä³ö¼«ĞÔ
-    timer_ocintpara.outputstate  = TIMER_CCX_ENABLE;            //Í¨µÀÊä³ö×´Ì¬
-    timer_ocintpara.ocidlestate  = TIMER_OC_IDLE_STATE_LOW;     //Í¨µÀ´¦ÓÚ¿ÕÏĞÊ±µÄÊä³ö	
-    timer_ocintpara.ocnpolarity  = TIMER_OCN_POLARITY_HIGH;     //»¥²¹Í¨µÀÊä³ö¼«ĞÔ 
-    timer_ocintpara.outputnstate = TIMER_CCXN_DISABLE;          //»¥²¹Í¨µÀÊä³ö×´Ì¬
-    timer_ocintpara.ocnidlestate = TIMER_OCN_IDLE_STATE_LOW;    //»¥²¹Í¨µÀ´¦ÓÚ¿ÕÏĞÊ±µÄÊä³ö
+    timer_ocintpara.ocpolarity   = TIMER_OC_POLARITY_LOW;       //é€šé“è¾“å‡ºææ€§
+    timer_ocintpara.outputstate  = TIMER_CCX_ENABLE;            //é€šé“è¾“å‡ºçŠ¶æ€
+    timer_ocintpara.ocidlestate  = TIMER_OC_IDLE_STATE_LOW;     //é€šé“å¤„äºç©ºé—²æ—¶çš„è¾“å‡º	
+    timer_ocintpara.ocnpolarity  = TIMER_OCN_POLARITY_HIGH;     //äº’è¡¥é€šé“è¾“å‡ºææ€§ 
+    timer_ocintpara.outputnstate = TIMER_CCXN_DISABLE;          //äº’è¡¥é€šé“è¾“å‡ºçŠ¶æ€
+    timer_ocintpara.ocnidlestate = TIMER_OCN_IDLE_STATE_LOW;    //äº’è¡¥é€šé“å¤„äºç©ºé—²æ—¶çš„è¾“å‡º
 
     timer_channel_output_config(TIMER4,TIMER_CH_2,&timer_ocintpara);
 
@@ -154,10 +154,10 @@ void PWMOut_LCD_BK_Init(void)  //TIM4_CH2    LCD_BK-PA2
 }
 
 /**********************************************************************************************************
-*	º¯ Êı Ãû£ºSet_LCD_Bk
-*	¹¦ÄÜËµÃ÷£ºÉèÖÃLCDµÄ±³¹â
-*	ĞÎ    ²Î£ºpulse:±³¹âÖµ£¬È¡Öµ·¶Î§£º0-99£¬È¡Öµ0¹Ø±Õ±³¹â£¬È¡Öµ99±³¹â×îÁÁ
-*	·µ »Ø Öµ£ºÎŞ
+*	å‡½ æ•° åï¼šSet_LCD_Bk
+*	åŠŸèƒ½è¯´æ˜ï¼šè®¾ç½®LCDçš„èƒŒå…‰
+*	å½¢    å‚ï¼špulse:èƒŒå…‰å€¼ï¼Œå–å€¼èŒƒå›´ï¼š0-99ï¼Œå–å€¼0å…³é—­èƒŒå…‰ï¼Œå–å€¼99èƒŒå…‰æœ€äº®
+*	è¿” å› å€¼ï¼šæ— 
 **********************************************************************************************************/ 
 void Set_LCD_Bk(uint32_t pulse)
 {
@@ -165,10 +165,10 @@ void Set_LCD_Bk(uint32_t pulse)
 }
 
 /**********************************************************************************************************
-*	º¯ Êı Ãû£ºTimeBase_Init
-*	¹¦ÄÜËµÃ÷£º
-*	ĞÎ    ²Î£º
-*	·µ »Ø Öµ£º
+*	å‡½ æ•° åï¼šTimeBase_Init
+*	åŠŸèƒ½è¯´æ˜ï¼š
+*	å½¢    å‚ï¼š
+*	è¿” å› å€¼ï¼š
 **********************************************************************************************************/ 
 //void TimeBase_Init(void)  //TIM5
 //{

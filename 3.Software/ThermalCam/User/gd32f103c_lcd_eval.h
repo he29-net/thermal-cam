@@ -12,27 +12,27 @@
 
     All rights reserved.
 
-    Redistribution and use in source and binary forms, with or without modification, 
+    Redistribution and use in source and binary forms, with or without modification,
 are permitted provided that the following conditions are met:
 
-    1. Redistributions of source code must retain the above copyright notice, this 
+    1. Redistributions of source code must retain the above copyright notice, this
        list of conditions and the following disclaimer.
-    2. Redistributions in binary form must reproduce the above copyright notice, 
-       this list of conditions and the following disclaimer in the documentation 
+    2. Redistributions in binary form must reproduce the above copyright notice,
+       this list of conditions and the following disclaimer in the documentation
        and/or other materials provided with the distribution.
-    3. Neither the name of the copyright holder nor the names of its contributors 
-       may be used to endorse or promote products derived from this software without 
+    3. Neither the name of the copyright holder nor the names of its contributors
+       may be used to endorse or promote products derived from this software without
        specific prior written permission.
 
-    THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" 
-AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED 
-WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. 
-IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, 
-INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT 
-NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR 
-PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
-WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) 
-ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY 
+    THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY
 OF SUCH DAMAGE.
 */
 
@@ -41,49 +41,49 @@ OF SUCH DAMAGE.
 
 #include "bsp.h"
 
-//∆¨—°
+//ÁâáÈÄâ
 #define ILI9341_CS_PORT      GPIOA
 #define ILI9341_CS_PIN       GPIO_PIN_3
 
-//DC“˝Ω≈ 
+//DCÂºïËÑö
 #define ILI9341_DC_PORT      GPIOA
 #define ILI9341_DC_PIN       GPIO_PIN_2
 
-//–¥ πƒ‹ 
+//ÂÜô‰ΩøËÉΩ
 #define ILI9341_WR_PORT      GPIOC
 #define ILI9341_WR_PIN       GPIO_PIN_15
 
-//∂¡ πƒ‹
+//ËØª‰ΩøËÉΩ
 #define ILI9341_RD_PORT      GPIOC
 #define ILI9341_RD_PIN       GPIO_PIN_14
 
-//±≥π‚“˝Ω≈ 
+//ËÉåÂÖâÂºïËÑö
 #define ILI9341_BK_PORT      GPIOA
 #define ILI9341_BK_PIN       GPIO_PIN_8
 
-// ˝æ›–≈∫≈œﬂ
+//Êï∞ÊçÆ‰ø°Âè∑Á∫ø
 #define ILI9341_DATA_PORT    GPIOB
 #define ILI9341_DATA_PIN     GPIO_PIN_ALL
 
-/********–≈∫≈œﬂøÿ÷∆œ‡πÿµƒ∫Í***************/
-#define	ILI9341_CS_SET  	 GPIO_BOP(ILI9341_CS_PORT) = (uint32_t)ILI9341_CS_PIN  //∆¨—°∂Àø⁄  		
-#define	ILI9341_DC_SET		 GPIO_BOP(ILI9341_DC_PORT) = (uint32_t)ILI9341_DC_PIN  // ˝æ›/√¸¡Ó 	  
-#define	ILI9341_WR_SET		 GPIO_BOP(ILI9341_WR_PORT) = (uint32_t)ILI9341_WR_PIN  //–¥ ˝æ›			
-#define	ILI9341_RD_SET		 GPIO_BOP(ILI9341_RD_PORT) = (uint32_t)ILI9341_RD_PIN  //∂¡ ˝æ›			
-								    
-#define	ILI9341_CS_CLR  	 GPIO_BC(ILI9341_CS_PORT) = (uint32_t)ILI9341_CS_PIN   //∆¨—°∂Àø⁄  		
-#define	ILI9341_DC_CLR		 GPIO_BC(ILI9341_DC_PORT) = (uint32_t)ILI9341_DC_PIN   // ˝æ›/√¸¡Ó		     
-#define	ILI9341_WR_CLR		 GPIO_BC(ILI9341_WR_PORT) = (uint32_t)ILI9341_WR_PIN   //–¥ ˝æ›			
-#define	ILI9341_RD_CLR		 GPIO_BC(ILI9341_RD_PORT) = (uint32_t)ILI9341_RD_PIN   //∂¡ ˝æ›			
+/********‰ø°Âè∑Á∫øÊéßÂà∂Áõ∏ÂÖ≥ÁöÑÂÆè***************/
+#define	ILI9341_CS_SET  	 GPIO_BOP(ILI9341_CS_PORT) = (uint32_t)ILI9341_CS_PIN  //ÁâáÈÄâÁ´ØÂè£
+#define	ILI9341_DC_SET		 GPIO_BOP(ILI9341_DC_PORT) = (uint32_t)ILI9341_DC_PIN  //Êï∞ÊçÆ/ÂëΩ‰ª§
+#define	ILI9341_WR_SET		 GPIO_BOP(ILI9341_WR_PORT) = (uint32_t)ILI9341_WR_PIN  //ÂÜôÊï∞ÊçÆ
+#define	ILI9341_RD_SET		 GPIO_BOP(ILI9341_RD_PORT) = (uint32_t)ILI9341_RD_PIN  //ËØªÊï∞ÊçÆ
 
-// ˝æ›œﬂ ‰»Î ‰≥ˆ
-#define DATAOUT(x) 	         GPIO_OCTL(ILI9341_DATA_PORT) = (uint32_t)x            // ˝æ› ‰≥ˆ
-#define DATAIN     	         (uint16_t)(GPIO_ISTAT(ILI9341_DATA_PORT))             // ˝æ› ‰»Î	
+#define	ILI9341_CS_CLR  	 GPIO_BC(ILI9341_CS_PORT) = (uint32_t)ILI9341_CS_PIN   //ÁâáÈÄâÁ´ØÂè£
+#define	ILI9341_DC_CLR		 GPIO_BC(ILI9341_DC_PORT) = (uint32_t)ILI9341_DC_PIN   //Êï∞ÊçÆ/ÂëΩ‰ª§
+#define	ILI9341_WR_CLR		 GPIO_BC(ILI9341_WR_PORT) = (uint32_t)ILI9341_WR_PIN   //ÂÜôÊï∞ÊçÆ
+#define	ILI9341_RD_CLR		 GPIO_BC(ILI9341_RD_PORT) = (uint32_t)ILI9341_RD_PIN   //ËØªÊï∞ÊçÆ
 
-#define	ILI9341_BK_ON    	 GPIO_BOP(ILI9341_BK_PORT) = (uint32_t)ILI9341_BK_PIN  //±≥π‚ 
-#define	ILI9341_BK_OFF  	 GPIO_BC(ILI9341_BK_PORT) = (uint32_t)ILI9341_BK_PIN   //±≥π‚  	
+//Êï∞ÊçÆÁ∫øËæìÂÖ•ËæìÂá∫
+#define DATAOUT(x) 	         GPIO_OCTL(ILI9341_DATA_PORT) = (uint32_t)x            //Êï∞ÊçÆËæìÂá∫
+#define DATAIN     	         (uint16_t)(GPIO_ISTAT(ILI9341_DATA_PORT))             //Êï∞ÊçÆËæìÂÖ•
 
-//–¥ ˝æ›∫Ø ˝
+#define	ILI9341_BK_ON    	 GPIO_BOP(ILI9341_BK_PORT) = (uint32_t)ILI9341_BK_PIN  //ËÉåÂÖâ
+#define	ILI9341_BK_OFF  	 GPIO_BC(ILI9341_BK_PORT) = (uint32_t)ILI9341_BK_PIN   //ËÉåÂÖâ
+
+//ÂÜôÊï∞ÊçÆÂáΩÊï∞
 //#define ILI9341_Write_Data(data){\
 //(*(volatile uint32_t *)(uint32_t)(0x40010810U)) = (uint32_t)GPIO_PIN_2;\
 //(*(volatile uint32_t *)(uint32_t)(0x40010814U)) = (uint32_t)GPIO_PIN_3;\
@@ -91,7 +91,7 @@ OF SUCH DAMAGE.
 //(*(volatile uint32_t *)(uint32_t)(0x40011014U)) = (uint32_t)GPIO_PIN_15;\
 //(*(volatile uint32_t *)(uint32_t)(0x40011010U)) = (uint32_t)GPIO_PIN_15;\
 //(*(volatile uint32_t *)(uint32_t)(0x40010810U)) = (uint32_t)GPIO_PIN_3;\
-//} 
+//}
 
 #define ILI9341_Write_Data(data){\
 ILI9341_DC_SET;\
@@ -100,36 +100,35 @@ DATAOUT(data);\
 ILI9341_WR_CLR;\
 ILI9341_WR_SET;\
 ILI9341_CS_SET;\
-} 
+}
 
 
 #define      BUF_WHITE                     255
 #define      BUF_BLACK                     254
 #define      BUF_GREEN                     144
-//#define      BUF_GREEN                     144
 
-#define      WHITE		 		           0xFFFF	   //∞◊…´
-#define      BLACK                         0x0000	   //∫⁄…´ 
-#define      GREY                          0xF7DE	   //ª“…´ 
-#define      BLUE                          0x001F	   //¿∂…´ 
-#define      BLUE2                         0x051F	   //«≥¿∂…´ 
-#define      RED                           0xF800	   //∫Ï…´ 
-#define      MAGENTA                       0xF81F	   //∫Ï◊œ…´£¨—Û∫Ï…´ 
-#define      GREEN                         0x07E0	   //¬Ã…´ 
-#define      CYAN                          0x7FFF	   //¿∂¬Ã…´£¨«‡…´ 
-#define      YELLOW                        0xFFE0	   //ª∆…´ 
+#define      WHITE		 		           0xFFFF	   //ÁôΩËâ≤
+#define      BLACK                         0x0000	   //ÈªëËâ≤
+#define      GREY                          0xF7DE	   //ÁÅ∞Ëâ≤
+#define      BLUE                          0x001F	   //ËìùËâ≤
+#define      BLUE2                         0x051F	   //ÊµÖËìùËâ≤
+#define      RED                           0xF800	   //Á∫¢Ëâ≤
+#define      MAGENTA                       0xF81F	   //Á∫¢Á¥´Ëâ≤ÔºåÊ¥ãÁ∫¢Ëâ≤
+#define      GREEN                         0x07E0	   //ÁªøËâ≤
+#define      CYAN                          0x7FFF	   //ËìùÁªøËâ≤ÔºåÈùíËâ≤
+#define      YELLOW                        0xFFE0	   //ÈªÑËâ≤
 #define      BRED                          0xF81F
 #define      GRED                          0xFFE0
 #define      GBLUE                         0x07FF
 
-void ILI9341_Write_Cmd ( uint16_t usCmd );
+void ILI9341_Write_Cmd (uint16_t usCmd);
 void exmc_lcd_init(void);
 void lcd_init(void);
 void Lcd_GramScan(void);
 void LCD_SetCursor(uint16_t Xpos, uint16_t Ypos);
-void LCD_setwindow(unsigned int x0,unsigned int y0,unsigned int x1,unsigned int y1);
-void LCD_Fill(uint16_t sx,uint16_t sy,uint16_t ex,uint16_t ey,uint16_t color);
-uint16_t LCD_ReadPoint(uint16_t x,uint16_t y);
-void LCD_ShowString(unsigned int x, unsigned int y,const char *s, unsigned int color,unsigned int b_color);
+void LCD_setwindow(unsigned int x0, unsigned int y0, unsigned int x1, unsigned int y1);
+void LCD_Fill(uint16_t sx, uint16_t sy, uint16_t ex, uint16_t ey, uint16_t color);
+uint16_t LCD_ReadPoint(uint16_t x, uint16_t y);
+void LCD_ShowString(unsigned int x, unsigned int y, const char *s, unsigned int color, unsigned int b_color);
 
 #endif /* GD32F103C_LCD_EVAL_H */

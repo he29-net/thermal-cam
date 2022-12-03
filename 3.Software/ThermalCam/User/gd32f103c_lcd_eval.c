@@ -12,27 +12,27 @@
 
     All rights reserved.
 
-    Redistribution and use in source and binary forms, with or without modification, 
+    Redistribution and use in source and binary forms, with or without modification,
 are permitted provided that the following conditions are met:
 
-    1. Redistributions of source code must retain the above copyright notice, this 
+    1. Redistributions of source code must retain the above copyright notice, this
        list of conditions and the following disclaimer.
-    2. Redistributions in binary form must reproduce the above copyright notice, 
-       this list of conditions and the following disclaimer in the documentation 
+    2. Redistributions in binary form must reproduce the above copyright notice,
+       this list of conditions and the following disclaimer in the documentation
        and/or other materials provided with the distribution.
-    3. Neither the name of the copyright holder nor the names of its contributors 
-       may be used to endorse or promote products derived from this software without 
+    3. Neither the name of the copyright holder nor the names of its contributors
+       may be used to endorse or promote products derived from this software without
        specific prior written permission.
 
-    THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" 
-AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED 
-WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. 
-IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, 
-INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT 
-NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR 
-PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
-WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) 
-ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY 
+    THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY
 OF SUCH DAMAGE.
 */
 
@@ -42,89 +42,89 @@ OF SUCH DAMAGE.
 void exmc_lcd_init(void)
 {
 	ILI9341_BK_OFF;
-	
-	//Ê±ÖÓÊ¹ÄÜ
+
+	//æ—¶é’Ÿä½¿èƒ½
     rcu_periph_clock_enable(RCU_AF);
 	rcu_periph_clock_enable(RCU_GPIOA);
 	rcu_periph_clock_enable(RCU_GPIOB);
 	rcu_periph_clock_enable(RCU_GPIOC);
 	rcu_periph_clock_enable(RCU_GPIOD);
 	rcu_periph_clock_enable(RCU_GPIOE);
-	
-	//³õÊ¼»¯
-    gpio_init(ILI9341_CS_PORT, GPIO_MODE_OUT_PP, GPIO_OSPEED_50MHZ, ILI9341_CS_PIN);  
-	gpio_init(ILI9341_DC_PORT, GPIO_MODE_OUT_PP, GPIO_OSPEED_50MHZ, ILI9341_DC_PIN); 
+
+	//åˆå§‹åŒ–
+    gpio_init(ILI9341_CS_PORT, GPIO_MODE_OUT_PP, GPIO_OSPEED_50MHZ, ILI9341_CS_PIN);
+	gpio_init(ILI9341_DC_PORT, GPIO_MODE_OUT_PP, GPIO_OSPEED_50MHZ, ILI9341_DC_PIN);
 	gpio_init(ILI9341_WR_PORT, GPIO_MODE_OUT_PP, GPIO_OSPEED_50MHZ, ILI9341_WR_PIN);
 	gpio_init(ILI9341_RD_PORT, GPIO_MODE_OUT_PP, GPIO_OSPEED_50MHZ, ILI9341_RD_PIN);
 	gpio_init(ILI9341_BK_PORT, GPIO_MODE_OUT_PP, GPIO_OSPEED_50MHZ, ILI9341_BK_PIN);
-	gpio_init(ILI9341_DATA_PORT, GPIO_MODE_OUT_PP, GPIO_OSPEED_50MHZ, ILI9341_DATA_PIN);	
+	gpio_init(ILI9341_DATA_PORT, GPIO_MODE_OUT_PP, GPIO_OSPEED_50MHZ, ILI9341_DATA_PIN);
 }
 
 void ILI9341_Write_Cmd ( uint16_t usCmd )
 {
-	ILI9341_CS_CLR;//¿ªÊ¼Æ¬Ñ¡      
-	ILI9341_DC_CLR;//Ğ´ÃüÁî
-	ILI9341_RD_SET;//½ûÖ¹¶Á
-	DATAOUT(usCmd);//Êä³öÃüÁî
-	ILI9341_WR_CLR;//Ğ´Èë¿ªÊ¼
-	ILI9341_WR_SET;//Ğ´Èë½áÊø
-	ILI9341_CS_SET;//½áÊøÆ¬Ñ¡        	
+	ILI9341_CS_CLR;//å¼€å§‹ç‰‡é€‰
+	ILI9341_DC_CLR;//å†™å‘½ä»¤
+	ILI9341_RD_SET;//ç¦æ­¢è¯»
+	DATAOUT(usCmd);//è¾“å‡ºå‘½ä»¤
+	ILI9341_WR_CLR;//å†™å…¥å¼€å§‹
+	ILI9341_WR_SET;//å†™å…¥ç»“æŸ
+	ILI9341_CS_SET;//ç»“æŸç‰‡é€‰
 }
 
 /**
-  * @brief  ´ÓILI9341¶ÁÈ¡Êı¾İ
-  * @param  ÎŞ
-  * @retval ¶ÁÈ¡µ½µÄÊı¾İ
-  */	
+  * @brief  ä»ILI9341è¯»å–æ•°æ®
+  * @param  æ— 
+  * @retval è¯»å–åˆ°çš„æ•°æ®
+  */
 uint16_t ILI9341_Read_Data ( void )
 {
 	uint16_t data;
- 	GPIO_CTL0(GPIOB) = 0x88888888; //PB0-7  ÉÏÀ­ÊäÈë 
-	GPIO_CTL1(GPIOB) = 0x88888888; //PB8-15 ÉÏÀ­ÊäÈë
-	GPIO_OCTL(ILI9341_DATA_PORT) = 0X0000;     //È«²¿Êä³ö0
+ 	GPIO_CTL0(GPIOB) = 0x88888888; //PB0-7  ä¸Šæ‹‰è¾“å…¥
+	GPIO_CTL1(GPIOB) = 0x88888888; //PB8-15 ä¸Šæ‹‰è¾“å…¥
+	GPIO_OCTL(ILI9341_DATA_PORT) = 0X0000;     //å…¨éƒ¨è¾“å‡º0
 
 	ILI9341_DC_SET;
 	ILI9341_WR_SET;
 
 	ILI9341_CS_CLR;
-	//¶ÁÈ¡Êı¾İ
-	ILI9341_RD_CLR;    
-    
-	data=DATAIN;  
-	ILI9341_RD_SET;
-	ILI9341_CS_SET; 
+	//è¯»å–æ•°æ®
+	ILI9341_RD_CLR;
 
-	GPIO_CTL0(GPIOB) = 0X33333333; //PB0-7  ÉÏÀ­Êä³ö
-	GPIO_CTL1(GPIOB) = 0X33333333; //PB8-15 ÉÏÀ­Êä³ö
-	GPIO_OCTL(ILI9341_DATA_PORT) = 0XFFFF;    //È«²¿Êä³ö¸ß	
-	return data;  
+	data=DATAIN;
+	ILI9341_RD_SET;
+	ILI9341_CS_SET;
+
+	GPIO_CTL0(GPIOB) = 0X33333333; //PB0-7  ä¸Šæ‹‰è¾“å‡º
+	GPIO_CTL1(GPIOB) = 0X33333333; //PB8-15 ä¸Šæ‹‰è¾“å‡º
+	GPIO_OCTL(ILI9341_DATA_PORT) = 0XFFFF;    //å…¨éƒ¨è¾“å‡ºé«˜
+	return data;
 }
 
 void lcd_init(void)
 {
-	/*  Power control B (CFh)  ¹¦ºÄ¿ØÖÆB */
+	/*  Power control B (CFh)  åŠŸè€—æ§åˆ¶B */
 	delay_1ms(5);
 	ILI9341_Write_Cmd(0xCF);
 	ILI9341_Write_Data(0x00);
 	ILI9341_Write_Data(0x81);
 	ILI9341_Write_Data(0x30);
-	
-	/*  Power on sequence control (EDh) µçÔ´ĞòÁĞ¿ØÖÆ */
+
+	/*  Power on sequence control (EDh) ç”µæºåºåˆ—æ§åˆ¶ */
 	delay_1ms(5);
 	ILI9341_Write_Cmd(0xED);
 	ILI9341_Write_Data(0x64);
 	ILI9341_Write_Data(0x03);
 	ILI9341_Write_Data(0x12);
 	ILI9341_Write_Data(0x81);
-	
-	/*  Driver timing control A (E8h) Çı¶¯Ê±Ğò¿ØÖÆA */
+
+	/*  Driver timing control A (E8h) é©±åŠ¨æ—¶åºæ§åˆ¶A */
 	delay_1ms(5);
 	ILI9341_Write_Cmd(0xE8);
 	ILI9341_Write_Data(0x85);
 	ILI9341_Write_Data(0x10);
 	ILI9341_Write_Data(0x78);
-	
-	/*  Power control A (CBh) ¹¦ºÄ¿ØÖÆA */
+
+	/*  Power control A (CBh) åŠŸè€—æ§åˆ¶A */
 	delay_1ms(5);
 	ILI9341_Write_Cmd(0xCB);
 	ILI9341_Write_Data(0x39);
@@ -132,58 +132,58 @@ void lcd_init(void)
 	ILI9341_Write_Data(0x00);
 	ILI9341_Write_Data(0x34);
 	ILI9341_Write_Data(0x02);
-	
-	/* Pump ratio control (F7h) ±Ã±È¿ØÖÆ */
+
+	/* Pump ratio control (F7h) æ³µæ¯”æ§åˆ¶ */
 	delay_1ms(5);
 	ILI9341_Write_Cmd(0xF7);
 	ILI9341_Write_Data(0x20);
-	
-	/* Driver timing control B Çı¶¯Ê±Ğò¿ØÖÆB */
+
+	/* Driver timing control B é©±åŠ¨æ—¶åºæ§åˆ¶B */
 	delay_1ms(5);
 	ILI9341_Write_Cmd(0xEA);
 	ILI9341_Write_Data(0x00);
 	ILI9341_Write_Data(0x00);
-	
-	/* Frame Rate Control (In Normal Mode/Full Colors) (B1h) Ö¡ÂÊ¿ØÖÆ */
+
+	/* Frame Rate Control (In Normal Mode/Full Colors) (B1h) å¸§ç‡æ§åˆ¶ */
 	delay_1ms(5);
 	ILI9341_Write_Cmd(0xB1);
-	ILI9341_Write_Data(0x00);  //ÄÚ²¿Ê±ÖÓ²»·ÖÆµ
-	ILI9341_Write_Data(0x1B);  //Ö¡ÂÊÎª70Hz
-	
+	ILI9341_Write_Data(0x00);  //å†…éƒ¨æ—¶é’Ÿä¸åˆ†é¢‘
+	ILI9341_Write_Data(0x1B);  //å¸§ç‡ä¸º70Hz
+
 	/*  Display Function Control (B6h) */
 	delay_1ms(5);
 	ILI9341_Write_Cmd(0xB6);
 	ILI9341_Write_Data(0x0A);
 	ILI9341_Write_Data(0xA2);
-	
+
 	/* Power Control 1 (C0h) */
 	delay_1ms(5);
 	ILI9341_Write_Cmd(0xC0);
 	ILI9341_Write_Data(0x35);
-	
+
 	/* Power Control 2 (C1h) */
 	delay_1ms(5);
 	ILI9341_Write_Cmd(0xC1);
 	ILI9341_Write_Data(0x11);
-	
+
 	/* VCOM Control 1(C5h) */
 	ILI9341_Write_Cmd(0xC5);
 	ILI9341_Write_Data(0x45);
 	ILI9341_Write_Data(0x45);
-	
+
 	/*  VCOM Control 2(C7h)  */
 	ILI9341_Write_Cmd(0xC7);
 	ILI9341_Write_Data(0xA2);
-	
+
 	/* Enable 3G (F2h) */
 	ILI9341_Write_Cmd(0xF2);
 	ILI9341_Write_Data(0x00);
-	
+
 	/* Gamma Set (26h) */
 	ILI9341_Write_Cmd(0x26);
 	ILI9341_Write_Data(0x01);
 	delay_1ms(5);
-	
+
 	/* Positive Gamma Correction */
 	ILI9341_Write_Cmd(0xE0); //Set Gamma
 	ILI9341_Write_Data(0x0F);
@@ -201,7 +201,7 @@ void lcd_init(void)
 	ILI9341_Write_Data(0x0F);
 	ILI9341_Write_Data(0x07);
 	ILI9341_Write_Data(0x00);
-	
+
 	/* Negative Gamma Correction (E1h) */
 	ILI9341_Write_Cmd(0XE1); //Set Gamma
 	ILI9341_Write_Data(0x00);
@@ -219,407 +219,409 @@ void lcd_init(void)
 	ILI9341_Write_Data(0x30);
 	ILI9341_Write_Data(0x38);
 	ILI9341_Write_Data(0x0F);
-	
-//	/* memory access control set ´æ´¢Æ÷·ÃÎÊ¿ØÖÆ */
+
+//	/* memory access control set å­˜å‚¨å™¨è®¿é—®æ§åˆ¶ */
 //	delay_1ms(5);
-//	ILI9341_Write_Cmd(0x36); 	
-//	ILI9341_Write_Data(0x68);    
+//	ILI9341_Write_Cmd(0x36);
+//	ILI9341_Write_Data(0x68);
 //	delay_1ms(5);
-	
-//	/* column address control set ÁĞµØÖ·ÉèÖÃ */
-//	ILI9341_Write_Cmd(0X2A); 
+
+//	/* column address control set åˆ—åœ°å€è®¾ç½® */
+//	ILI9341_Write_Cmd(0X2A);
 //	ILI9341_Write_Data(0x00);
-//	ILI9341_Write_Data(0x00);  //ÁĞ¿ªÊ¼µØÖ·  0
+//	ILI9341_Write_Data(0x00);  //åˆ—å¼€å§‹åœ°å€  0
 //	ILI9341_Write_Data(0x01);
-//	ILI9341_Write_Data(0x3F);  //ÁĞ½áÊøµØÖ·  319
-//	
-//	/* page address control set ĞĞµØÖ·ÉèÖÃ */
+//	ILI9341_Write_Data(0x3F);  //åˆ—ç»“æŸåœ°å€  319
+//
+//	/* page address control set è¡Œåœ°å€è®¾ç½® */
 //	delay_1ms(5);
-//	ILI9341_Write_Cmd(0X2B); 
+//	ILI9341_Write_Cmd(0X2B);
 //	ILI9341_Write_Data(0x00);
-//	ILI9341_Write_Data(0x00);  //ĞĞ¿ªÊ¼µØÖ·  0
+//	ILI9341_Write_Data(0x00);  //è¡Œå¼€å§‹åœ°å€  0
 //	ILI9341_Write_Data(0x00);
-//	ILI9341_Write_Data(0xEF);  //ĞĞ½áÊøµØÖ·  239
-	
+//	ILI9341_Write_Data(0xEF);  //è¡Œç»“æŸåœ°å€  239
+
 	/*  Pixel Format Set (3Ah)  */
 	delay_1ms(5);
-	ILI9341_Write_Cmd(0x3a); 
+	ILI9341_Write_Cmd(0x3a);
 	ILI9341_Write_Data(0x55);
-	
-	/* Sleep Out (11h)  ÍË³öË¯ÃßÄ£Ê½ */
-	ILI9341_Write_Cmd(0x11);	
+
+	/* Sleep Out (11h)  é€€å‡ºç¡çœ æ¨¡å¼ */
+	ILI9341_Write_Cmd(0x11);
 	delay_1ms(5);
 	delay_1ms(5);
-	
-	/* Display ON (29h) ¿ªÏÔÊ¾ */
-	ILI9341_Write_Cmd(0x29); 
-	
+
+	/* Display ON (29h) å¼€æ˜¾ç¤º */
+	ILI9341_Write_Cmd(0x29);
+
 //	/* write gram start */
-//	ILI9341_Write_Cmd(0x2C);	
+//	ILI9341_Write_Cmd(0x2C);
 }
 
-/* ÉèÖÃÒº¾§GRAMµÄÉ¨Ãè·½Ïò 
- * µ±ÉèÖÃ³É²»Í¬µÄÉ¨ÃèÄ£Ê½Ê±, page(¼´x) ¸ú column(¼´y) µÄÖµÊÇ»á¸Ä±äµÄ
+/* è®¾ç½®æ¶²æ™¶GRAMçš„æ‰«ææ–¹å‘
+ * å½“è®¾ç½®æˆä¸åŒçš„æ‰«ææ¨¡å¼æ—¶, page(å³x) è·Ÿ column(å³y) çš„å€¼æ˜¯ä¼šæ”¹å˜çš„
  */
 void Lcd_GramScan(void)
-{	
-	ILI9341_Write_Cmd(0x36); 
+{
+	ILI9341_Write_Cmd(0x36);
 	ILI9341_Write_Data(0x68);	//68
-	
-	ILI9341_Write_Cmd(0X2A); 
+
+	ILI9341_Write_Cmd(0x2A);
 	ILI9341_Write_Data(0x00);
 	ILI9341_Write_Data(0x00);
 	ILI9341_Write_Data(0x01);
-	ILI9341_Write_Data(0x3F);	
+	ILI9341_Write_Data(0x3F);
 
-	ILI9341_Write_Cmd(0X2B); 
+	ILI9341_Write_Cmd(0x2B);
 	ILI9341_Write_Data(0x00);
 	ILI9341_Write_Data(0x00);
 	ILI9341_Write_Data(0x00);
-	ILI9341_Write_Data(0xEF);			
-	
+	ILI9341_Write_Data(0xEF);
+
 	/* write gram start */
 	ILI9341_Write_Cmd(0x2C);
 }
 
-//ÉèÖÃ¹â±êÎ»ÖÃ
-//Xpos:ºá×ø±ê
-//Ypos:×İ×ø±ê
+//è®¾ç½®å…‰æ ‡ä½ç½®
+//Xpos:æ¨ªåæ ‡
+//Ypos:çºµåæ ‡
 void LCD_SetCursor(uint16_t Xpos, uint16_t Ypos)
-{	 
-	ILI9341_Write_Cmd(0X2A); 
-	ILI9341_Write_Data(Xpos>>8); 
-	ILI9341_Write_Data(Xpos&0XFF);	 
-	ILI9341_Write_Cmd(0X2B); 
-	ILI9341_Write_Data(Ypos>>8); 
-	ILI9341_Write_Data(Ypos&0XFF);
+{
+	ILI9341_Write_Cmd(0x2A);
+	ILI9341_Write_Data(Xpos >> 8);
+	ILI9341_Write_Data(Xpos & 0xFF);
+	ILI9341_Write_Cmd(0x2B);
+	ILI9341_Write_Data(Ypos >> 8);
+	ILI9341_Write_Data(Ypos & 0xFF);
 }
-//¶ÁÈ¡¸öÄ³µãµÄÑÕÉ«Öµ	 
-//x,y:×ø±ê
-//·µ»ØÖµ:´ËµãµÄÑÕÉ«
+//è¯»å–ä¸ªæŸç‚¹çš„é¢œè‰²å€¼
+//x,y:åæ ‡
+//è¿”å›å€¼:æ­¤ç‚¹çš„é¢œè‰²
 //uint16_t LCD_ReadPoint(uint16_t x,uint16_t y)
 //{
 // 	uint16_t r=0,g=0,b=0;
-//	   
-//	LCD_SetCursor(x,y);	    
-//	ILI9341_Write_Cmd(0X2E);//9341/6804/3510 ·¢ËÍ¶ÁGRAMÖ¸Áî
-// 
-// 	ILI9341_Read_Data();									//dummy Read	   
-//	Delay_50ns(2);	  
-// 	r=ILI9341_Read_Data();  		  						//Êµ¼Ê×ø±êÑÕÉ«
+//
+//	LCD_SetCursor(x,y);
+//	ILI9341_Write_Cmd(0X2E);//9341/6804/3510 å‘é€è¯»GRAMæŒ‡ä»¤
+//
+// 	ILI9341_Read_Data();									//dummy Read
+//	Delay_50ns(2);
+// 	r=ILI9341_Read_Data();  		  						//å®é™…åæ ‡é¢œè‰²
 
-//	Delay_50ns(2);	  
-//	b=ILI9341_Read_Data(); 
-//	g=r&0XFF;		       //¶ÔÓÚ9341/5310/5510,µÚÒ»´Î¶ÁÈ¡µÄÊÇRGµÄÖµ,RÔÚÇ°,GÔÚºó,¸÷Õ¼8Î»
+//	Delay_50ns(2);
+//	b=ILI9341_Read_Data();
+//	g=r&0XFF;		       //å¯¹äº9341/5310/5510,ç¬¬ä¸€æ¬¡è¯»å–çš„æ˜¯RGçš„å€¼,Råœ¨å‰,Gåœ¨å,å„å 8ä½
 //	g<<=8;
-//	
-//	return (((r>>11)<<11)|((g>>10)<<5)|(b>>11));//ILI9341/NT35310/NT35510ĞèÒª¹«Ê½×ª»»Ò»ÏÂ
-//}	
+//
+//	return (((r>>11)<<11)|((g>>10)<<5)|(b>>11));//ILI9341/NT35310/NT35510éœ€è¦å…¬å¼è½¬æ¢ä¸€ä¸‹
+//}
 
-uint16_t LCD_ReadPoint(uint16_t x,uint16_t y)
+uint16_t LCD_ReadPoint(uint16_t x, uint16_t y)
 {
- 	uint16_t r=0,g=0,b=0;
-	   
-	LCD_SetCursor(x,y);	    
+ 	uint16_t r = 0,g = 0,b = 0;
+
+	LCD_SetCursor(x, y);
 	ILI9341_Write_Cmd(0X2E);
- 
- 	GPIO_CTL0(GPIOB) = 0x88888888; //PB0-7  ÉÏÀ­ÊäÈë 
-	GPIO_CTL1(GPIOB) = 0x88888888; //PB8-15 ÉÏÀ­ÊäÈë
-	GPIO_OCTL(ILI9341_DATA_PORT) = 0X0000;     //È«²¿Êä³ö0
+
+ 	GPIO_CTL0(GPIOB) = 0x88888888; //PB0-7  ä¸Šæ‹‰è¾“å…¥
+	GPIO_CTL1(GPIOB) = 0x88888888; //PB8-15 ä¸Šæ‹‰è¾“å…¥
+	GPIO_OCTL(ILI9341_DATA_PORT) = 0X0000;     //å…¨éƒ¨è¾“å‡º0
 
 	ILI9341_DC_SET;
 	ILI9341_WR_SET;
 	ILI9341_CS_CLR;
-	ILI9341_RD_CLR;   
-	r=DATAIN; 
+	ILI9341_RD_CLR;
+	r = DATAIN;
 	ILI9341_RD_SET;
 
-	ILI9341_RD_CLR;  
-	r=DATAIN; 
+	ILI9341_RD_CLR;
+	r = DATAIN;
 	ILI9341_RD_SET;
 
-	ILI9341_RD_CLR;   
-	b=DATAIN;  
+	ILI9341_RD_CLR;
+	b = DATAIN;
 	ILI9341_RD_SET;
-	ILI9341_CS_SET; 
+	ILI9341_CS_SET;
 
-	GPIO_CTL0(GPIOB) = 0X33333333; //PB0-7  ÉÏÀ­Êä³ö
-	GPIO_CTL1(GPIOB) = 0X33333333; //PB8-15 ÉÏÀ­Êä³ö
-	GPIO_OCTL(ILI9341_DATA_PORT) = 0XFFFF;    //È«²¿Êä³ö¸ß	
-	
-	g=r&0XFF;		       //¶ÔÓÚ9341/5310/5510,µÚÒ»´Î¶ÁÈ¡µÄÊÇRGµÄÖµ,RÔÚÇ°,GÔÚºó,¸÷Õ¼8Î»
-	g<<=8;
-	
-	return (((r>>11)<<11)|((g>>10)<<5)|(b>>11));//ILI9341/NT35310/NT35510ĞèÒª¹«Ê½×ª»»Ò»ÏÂ
-}	
-//================================================================================================
-//	ÊµÏÖ¹¦ÄÜ£º	ÉèÖÃ´°¿Ú
-//	ÊäÈë²ÎÊı£º	x0,y0,x1,y1    xÖá¿ªÊ¼£¬yÖá¿ªÊ¼£¬xÖá½áÊø£¬yÖá½áÊø
-//================================================================================================
-void LCD_setwindow(unsigned int x0,unsigned int y0,unsigned int x1,unsigned int y1)
-{
-	ILI9341_Write_Cmd(0x2a);   
-	ILI9341_Write_Data(x0>>8);
-	ILI9341_Write_Data(x0&0xff);
-	ILI9341_Write_Data(x1>>8);
-	ILI9341_Write_Data(x1&0xff);
+	GPIO_CTL0(GPIOB) = 0X33333333; //PB0-7  ä¸Šæ‹‰è¾“å‡º
+	GPIO_CTL1(GPIOB) = 0X33333333; //PB8-15 ä¸Šæ‹‰è¾“å‡º
+	GPIO_OCTL(ILI9341_DATA_PORT) = 0XFFFF;    //å…¨éƒ¨è¾“å‡ºé«˜
 
-	ILI9341_Write_Cmd(0x2b);   
-	ILI9341_Write_Data(y0>>8);
-	ILI9341_Write_Data(y0&0xff);
-	ILI9341_Write_Data(y1>>8);
-	ILI9341_Write_Data(y1&0xff);
+	g = r & 0XFF;		       //å¯¹äº9341/5310/5510,ç¬¬ä¸€æ¬¡è¯»å–çš„æ˜¯RGçš„å€¼,Råœ¨å‰,Gåœ¨å,å„å 8ä½
+	g <<= 8;
 
-	ILI9341_Write_Cmd(0x2C);		
+	return (((r >> 11) << 11) | ((g >> 10) << 5) | (b >> 11));//ILI9341/NT35310/NT35510éœ€è¦å…¬å¼è½¬æ¢ä¸€ä¸‹
 }
 
-//ÔÚÖ¸¶¨ÇøÓòÄÚÌî³äµ¥¸öÑÕÉ«
-//(sx,sy),(ex,ey):Ìî³ä¾ØĞÎ¶Ô½Ç×ø±ê,ÇøÓò´óĞ¡Îª:(ex-sx+1)*(ey-sy+1)   
-//color:ÒªÌî³äµÄÑÕÉ«
-void LCD_Fill(uint16_t sx,uint16_t sy,uint16_t ex,uint16_t ey,uint16_t color)
-{   
-    unsigned int i,j; 
+//================================================================================================
+//	å®ç°åŠŸèƒ½ï¼š	è®¾ç½®çª—å£
+//	è¾“å…¥å‚æ•°ï¼š	x0,y0,x1,y1    xè½´å¼€å§‹ï¼Œyè½´å¼€å§‹ï¼Œxè½´ç»“æŸï¼Œyè½´ç»“æŸ
+//================================================================================================
+void LCD_setwindow(unsigned int x0, unsigned int y0, unsigned int x1, unsigned int y1)
+{
+	ILI9341_Write_Cmd(0x2a);
+	ILI9341_Write_Data(x0 >> 8);
+	ILI9341_Write_Data(x0 & 0xff);
+	ILI9341_Write_Data(x1 >> 8);
+	ILI9341_Write_Data(x1 & 0xff);
 
- 	LCD_setwindow(sx,sy,ex,ey);
+	ILI9341_Write_Cmd(0x2b);
+	ILI9341_Write_Data(y0 >> 8);
+	ILI9341_Write_Data(y0 & 0xff);
+	ILI9341_Write_Data(y1 >> 8);
+	ILI9341_Write_Data(y1 & 0xff);
 
-	for(i=sy;i<=ey;i++)
+	ILI9341_Write_Cmd(0x2C);
+}
+
+//åœ¨æŒ‡å®šåŒºåŸŸå†…å¡«å……å•ä¸ªé¢œè‰²
+//(sx,sy),(ex,ey):å¡«å……çŸ©å½¢å¯¹è§’åæ ‡,åŒºåŸŸå¤§å°ä¸º:(ex-sx+1)*(ey-sy+1)
+//color:è¦å¡«å……çš„é¢œè‰²
+void LCD_Fill(uint16_t sx, uint16_t sy, uint16_t ex, uint16_t ey, uint16_t color)
+{
+    unsigned int i, j;
+
+ 	LCD_setwindow(sx, sy, ex, ey);
+
+	for (i = sy; i <= ey; i++)
 	{
-	    for(j=sx;j<=ex;j++) 
-		{  
-			ILI9341_Write_Data(color);				
-		}	
+	    for (j = sx; j <= ex; j++)
+		{
+			ILI9341_Write_Data(color);
+		}
 	}
 }
 
-void LCD_Showchar(unsigned int x, unsigned int y,unsigned char c, unsigned int color,unsigned int b_color)
-{  
-	unsigned int  s_x ,s_y, temp ;
+void LCD_Showchar(unsigned int x, unsigned int y,unsigned char c, unsigned int color, unsigned int b_color)
+{
+	unsigned int s_x ,s_y, temp;
   	unsigned int j;
   	c -= 32;
 
-	LCD_setwindow(x,y,x+7,y+15);
-	for( s_y=0 ; s_y<16 ; s_y++ )
+	LCD_setwindow(x, y, x + 7, y + 15);
+	for (s_y = 0; s_y < 16; s_y++)
 	{
-	   j=c;
-	   j=j*16+s_y;
-	   temp=font16x8[j];
-	   for( s_x=0 ; s_x < 8 ; s_x++ )
+	   j = c;
+	   j = j * 16 + s_y;
+	   temp = font16x8[j];
+	   for (s_x = 0; s_x < 8; s_x++)
 	   {
-			if( (temp&(0x80>>(s_x))) == (0x80>>(s_x)) )
+			if ((temp & (0x80 >> (s_x))) == (0x80 >> (s_x)))
 			{
 				ILI9341_Write_Data(color);
 			}
 			else
 			{
-				ILI9341_Write_Data(b_color);	
-			}				
-	   }		
+				ILI9341_Write_Data(b_color);
+			}
+	   }
 	}
 }
 
-void LCD_ShowString(unsigned int x, unsigned int y,const char *s, unsigned int color,unsigned int b_color)
-{  
-	while(*s!='\0')
+void LCD_ShowString(unsigned int x, unsigned int y,const char *s, unsigned int color, unsigned int b_color)
+{
+	while (*s != '\0')
 	{
-		LCD_Showchar(x, y,*s, color,b_color);
-		x=x+8;
+		LCD_Showchar(x, y, *s, color, b_color);
+		x = x + 8;
 		s++;
 	}
-}	
+}
 
 /**********************************************************************************************************
-*	º¯ Êı Ãû£ºBuf_Showchar
-*	¹¦ÄÜËµÃ÷£º
-*	ĞÎ    ²Î£º
-*	·µ »Ø Öµ£º
+*	å‡½ æ•° åï¼šBuf_Showchar
+*	åŠŸèƒ½è¯´æ˜ï¼š
+*	å½¢    å‚ï¼š
+*	è¿” å› å€¼ï¼š
 **********************************************************************************************************/
-void Buf_Showchar(unsigned int x, unsigned int y,unsigned char c, unsigned int color,uint8_t UpOrDn)
-{  
-	unsigned int  s_x ,s_y, temp;
+void Buf_Showchar(unsigned int x, unsigned int y,unsigned char c, unsigned int color, uint8_t UpOrDn)
+{
+	unsigned int  s_x, s_y, temp;
 	unsigned int j;
 	c -= 32;
 
-	if(UpOrDn==0)  //ÉÏ°ë²¿·Ö
+	if (UpOrDn == 0)  //ä¸ŠåŠéƒ¨åˆ†
 	{
-		for( s_y=0 ; s_y<8 ; s_y++ )
+		for (s_y = 0; s_y < 8; s_y++)
 		{
-			j=c;
-			j=j*16+s_y;
-			temp=font16x8[j];
-			for( s_x=0 ; s_x < 8 ; s_x++ )
+			j = c;
+			j = j * 16 + s_y;
+			temp = font16x8[j];
+			for (s_x = 0; s_x < 8; s_x++)
 			{
-				if(  ( temp&(0x80>>s_x) ) == (0x80>>s_x)  )
-					data.DisBuf[(s_y+y)*320+x+s_x]=color;			
-			}		
-		}	
+				if ((temp & (0x80 >> s_x)) == (0x80 >> s_x))
+					data.DisBuf[(s_y + y) * 320 + x + s_x] = color;
+			}
+		}
 	}
-	else   //ÏÂ°ë²¿·Ö
+	else   //ä¸‹åŠéƒ¨åˆ†
 	{
-		for( s_y=8 ; s_y<16 ; s_y++ )
+		for (s_y = 8; s_y < 16; s_y++)
 		{
-			j=c;
-			j=j*16+s_y;
-			temp=font16x8[j];
-			for( s_x=0 ; s_x < 8 ; s_x++ )
+			j = c;
+			j = j * 16 + s_y;
+			temp = font16x8[j];
+			for (s_x = 0; s_x < 8; s_x++)
 			{
-				if(  ( temp&(0x80>>s_x) ) == (0x80>>s_x)  )
-					data.DisBuf[(s_y-8+y)*320+x+s_x]=color;			
-			}		
-		}	
+				if ((temp & (0x80 >> s_x)) == (0x80 >> s_x))
+					data.DisBuf[(s_y - 8 + y) * 320 + x + s_x] = color;
+			}
+		}
 	}
 }
 
 /**********************************************************************************************************
-*	º¯ Êı Ãû£ºBuf_ShowString
-*	¹¦ÄÜËµÃ÷£º
-*	ĞÎ    ²Î£º
-*	·µ »Ø Öµ£º
+*	å‡½ æ•° åï¼šBuf_ShowString
+*	åŠŸèƒ½è¯´æ˜ï¼š
+*	å½¢    å‚ï¼š
+*	è¿” å› å€¼ï¼š
 **********************************************************************************************************/
-void Buf_ShowString(unsigned int x, unsigned int y,const char *s, unsigned int color,uint8_t UpOrDn)
-{  
-	while(*s!='\0')
+void Buf_ShowString(unsigned int x, unsigned int y,const char *s, unsigned int color, uint8_t UpOrDn)
+{
+	while(*s != '\0')
 	{
-		Buf_Showchar(x, y,*s, color,UpOrDn);
-		x=x+8;
+		Buf_Showchar(x, y, *s, color, UpOrDn);
+		x = x + 8;
 		s++;
 	}
-}	
+}
 
 /**********************************************************************************************************
-*	º¯ Êı Ãû£ºBuf_ShowNum
-*	¹¦ÄÜËµÃ÷£ºÏÔÊ¾Êı×Ö£¬·¶Î§£º-999~999
-*	ĞÎ    ²Î£º
-*	·µ »Ø Öµ£º
+*	å‡½ æ•° åï¼šBuf_ShowNum
+*	åŠŸèƒ½è¯´æ˜ï¼šæ˜¾ç¤ºæ•°å­—ï¼ŒèŒƒå›´ï¼š-999~999
+*	å½¢    å‚ï¼š
+*	è¿” å› å€¼ï¼š
 **********************************************************************************************************/
-void Buf_ShowNum(unsigned int x, unsigned int y,int num, unsigned int color,uint8_t UpOrDn)
+void Buf_ShowNum(unsigned int x, unsigned int y, int num, unsigned int color, uint8_t UpOrDn)
 {
-	if(num<0)
+	if (num < 0)
 	{
 		num = -num;
-		Buf_Showchar(x,y,'-',color,UpOrDn);
-		x+=8;
+		Buf_Showchar(x, y, '-', color, UpOrDn);
+		x += 8;
 	}
-	
-	if(num>=100)
+
+	if (num >= 100)
 	{
-		Buf_Showchar(x, y,num/100+'0', color,UpOrDn);
-		Buf_Showchar(x+8, y,(num/10)%10+'0', color,UpOrDn);
-		Buf_Showchar(x+16, y,num%10+'0', color,UpOrDn);
+		Buf_Showchar(x, y, num / 100 + '0', color, UpOrDn);
+		Buf_Showchar(x + 8, y, (num / 10) % 10 + '0', color, UpOrDn);
+		Buf_Showchar(x + 16, y, num % 10 + '0', color, UpOrDn);
 	}
-	else if(num>=10)
+	else if (num >= 10)
 	{
-		Buf_Showchar(x, y,num/10+'0', color,UpOrDn);
-		Buf_Showchar(x+8, y,num%10+'0', color,UpOrDn);
+		Buf_Showchar(x, y, num / 10 + '0', color, UpOrDn);
+		Buf_Showchar(x + 8, y, num % 10 + '0', color, UpOrDn);
 	}
-	else
-		Buf_Showchar(x, y,num+'0', color,UpOrDn);
+	else {
+		Buf_Showchar(x, y, num + '0', color, UpOrDn);
+	}
 }
 
 /**********************************************************************************************************
-*	º¯ Êı Ãû£ºBuf_SmallFloatNum
-*	¹¦ÄÜËµÃ÷£ºÏÔÊ¾ÎÂ¶ÈÖµ£¬ÎÂ¶È·¶Î§-40~300£¬ÎÂ¶ÈÖµ·Å´óÁË10±¶£º-400~3000
-*	ĞÎ    ²Î£º
-*	·µ »Ø Öµ£º
+*	å‡½ æ•° åï¼šBuf_SmallFloatNum
+*	åŠŸèƒ½è¯´æ˜ï¼šæ˜¾ç¤ºæ¸©åº¦å€¼ï¼Œæ¸©åº¦èŒƒå›´-40~300ï¼Œæ¸©åº¦å€¼æ”¾å¤§äº†10å€ï¼š-400~3000
+*	å½¢    å‚ï¼š
+*	è¿” å› å€¼ï¼š
 **********************************************************************************************************/
-void Buf_SmallFloatNum(int x,int y,int16_t num,unsigned int color,uint8_t UpOrDn)
+void Buf_SmallFloatNum(int x, int y, int16_t num, unsigned int color, uint8_t UpOrDn)
 {
-	if(num<0)
+	if (num < 0)
 	{
 		num = -num;
-		Buf_Showchar(x,y,'-',color,UpOrDn);
-		x+=8;
+		Buf_Showchar(x, y, '-', color, UpOrDn);
+		x += 8;
 	}
 
-	if(num>=1000)
+	if (num >= 1000)
 	{
-		Buf_Showchar(x, y,num/1000+'0', color,UpOrDn);
-		x+=8;
-		Buf_Showchar(x, y,(num/100)%10+'0', color,UpOrDn);
-		x+=8;
-		Buf_Showchar(x, y,(num%100)/10+'0', color,UpOrDn);
-		x+=8;
-		Buf_Showchar(x, y,'.', color,UpOrDn);
-		x+=8;
-		Buf_Showchar(x, y,num%10+'0', color,UpOrDn);
+		Buf_Showchar(x, y, num / 1000 + '0', color, UpOrDn);
+		x += 8;
+		Buf_Showchar(x, y, (num / 100) % 10 + '0', color, UpOrDn);
+		x += 8;
+		Buf_Showchar(x, y, (num % 100) / 10 + '0', color, UpOrDn);
+		x += 8;
+		Buf_Showchar(x, y, '.', color, UpOrDn);
+		x += 8;
+		Buf_Showchar(x, y, num % 10 + '0', color, UpOrDn);
 	}
-    else if(num>=100)
+    else if (num >= 100)
 	{
-		Buf_Showchar(x, y,num/100+'0', color,UpOrDn);
-		x+=8;
-		Buf_Showchar(x, y,(num/10)%10+'0', color,UpOrDn);
-		x+=8;
-		Buf_Showchar(x, y,'.', color,UpOrDn);
-		x+=8;
-		Buf_Showchar(x, y,num%10+'0', color,UpOrDn);
+		Buf_Showchar(x, y, num / 100 + '0', color, UpOrDn);
+		x += 8;
+		Buf_Showchar(x, y, (num / 10) % 10 + '0', color, UpOrDn);
+		x += 8;
+		Buf_Showchar(x, y, '.', color, UpOrDn);
+		x += 8;
+		Buf_Showchar(x, y, num % 10 + '0', color, UpOrDn);
 	}
-	else if(num>=10)
+	else if (num >= 10)
 	{
-		Buf_Showchar(x, y,num/10+'0', color,UpOrDn);
-		x+=8;
-		Buf_Showchar(x, y,'.', color,UpOrDn);
-		x+=8;
-		Buf_Showchar(x, y,num%10+'0', color,UpOrDn);
+		Buf_Showchar(x, y, num / 10 + '0', color, UpOrDn);
+		x += 8;
+		Buf_Showchar(x, y, '.', color, UpOrDn);
+		x += 8;
+		Buf_Showchar(x, y, num % 10 + '0', color, UpOrDn);
 	}
 	else
 	{
-		Buf_Showchar(x, y,0+'0', color,UpOrDn);
-		x+=8;
-		Buf_Showchar(x, y,'.', color,UpOrDn);
-		x+=8;
-		Buf_Showchar(x, y,num+'0', color,UpOrDn);		
+		Buf_Showchar(x, y, 0 + '0', color, UpOrDn);
+		x += 8;
+		Buf_Showchar(x, y, '.', color, UpOrDn);
+		x += 8;
+		Buf_Showchar(x, y, num + '0', color, UpOrDn);
 	}
 
-	x+=8;
-	Buf_ShowString(x, y,"'C", color,UpOrDn);
+	x += 8;
+	Buf_ShowString(x, y, "'C", color, UpOrDn);
 }
 
-void Buf_Fill(uint16_t sx,uint16_t sy,uint16_t ex,uint16_t ey,uint8_t color)
-{   
-    unsigned int i,j; 
+void Buf_Fill(uint16_t sx, uint16_t sy, uint16_t ex, uint16_t ey, uint8_t color)
+{
+    unsigned int i, j;
 
-	for(i=sy;i<=ey;i++)
+	for (i = sy; i <= ey; i++)
 	{
-	    for(j=sx;j<=ex;j++) 
-		{  
-			data.DisBuf[i*320+j]=color;				
-		}	
+	    for (j = sx; j <= ex; j++)
+		{
+			data.DisBuf[i * 320 + j] = color;
+		}
 	}
 }
 
 /**********************************************************************************************************
-*	º¯ Êı Ãû£ºDisp_BatPower
-*	¹¦ÄÜËµÃ÷£ºÏÔÊ¾µçÁ¿
-*	ĞÎ    ²Î£º
-*	·µ »Ø Öµ£º
+*	å‡½ æ•° åï¼šDisp_BatPower
+*	åŠŸèƒ½è¯´æ˜ï¼šæ˜¾ç¤ºç”µé‡
+*	å½¢    å‚ï¼š
+*	è¿” å› å€¼ï¼š
 **********************************************************************************************************/
 void Disp_BatPower(void)
 {
-	uint16_t i,tmp;
-	
-	Buf_Fill(294,0,294,9,BUF_BLACK);
-	Buf_Fill(312,0,312,9,BUF_BLACK);
-	Buf_Fill(294,0,312,0,BUF_BLACK);
-	Buf_Fill(294,9,312,9,BUF_BLACK);
-	Buf_Fill(291,3,291,6,BUF_BLACK);
-	Buf_Fill(292,3,292,6,BUF_BLACK);
-	Buf_Fill(293,3,293,6,BUF_BLACK);
-	
-	if(CRG_STA_READ())  //¸ù¾İµçÁ¿À´ÏÔÊ¾Êú¸Ü 	
+	uint16_t i, tmp;
+
+	Buf_Fill( 6, 0,  6, 9, BUF_BLACK);
+	Buf_Fill(24, 0, 24, 9, BUF_BLACK);
+	Buf_Fill( 6, 0, 24, 0, BUF_BLACK);
+	Buf_Fill( 6, 9, 24, 9, BUF_BLACK);
+	Buf_Fill( 3, 3,  3, 6, BUF_BLACK);
+	Buf_Fill( 4, 3,  4, 6, BUF_BLACK);
+	Buf_Fill( 5, 3,  5, 6, BUF_BLACK);
+
+	if(CRG_STA_READ())  //æ ¹æ®ç”µé‡æ¥æ˜¾ç¤ºç«–æ 
 	{
-		Buf_Fill(295,1,311,8,BUF_WHITE);  //296-310  15
-		
-		tmp=((ADCValue[0]*660)>>12);
-		if(tmp<539) tmp=539;
-		else if(tmp>642) tmp=642;
-		tmp=(tmp-539)*15/103;
-		
-		for(i=0;i<tmp;i++)
+		Buf_Fill(7, 1, 23, 8, BUF_WHITE);
+
+		tmp = ((ADCValue[0] * 660) >> 12);
+		if (tmp < 539) tmp = 539;
+		else if (tmp > 642) tmp = 642;
+		tmp = (tmp - 539) * 15 / 103;
+
+		for (i = 0; i < tmp; i++)
 		{
-			Buf_Fill(310-i,2,310-i,7,BUF_BLACK);
-		}	
-	}	
-	else            //ÕıÔÚ³äµç
+			Buf_Fill(22 - i, 2, 22 - i, 7, BUF_BLACK);
+		}
+	}
+	else            //æ­£åœ¨å……ç”µ
 	{
-		Buf_Fill(295,1,311,8,BUF_GREEN);
+		Buf_Fill(7, 1, 23, 8, BUF_GREEN);
 	}
 }

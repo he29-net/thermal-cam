@@ -1,53 +1,53 @@
 #include "bmp.h"
 #include "string.h"
 
-//uint16_t databuf[640];				//Êı¾İ»º´æÇøµØÖ·
-//BMP±àÂëº¯Êı
-//½«µ±Ç°LCDÆÁÄ»µÄÖ¸¶¨ÇøÓò½ØÍ¼,´æÎª16Î»¸ñÊ½µÄBMPÎÄ¼ş RGB565¸ñÊ½.
-//±£´æÎªrgb565ÔòĞèÒªÑÚÂë,ĞèÒªÀûÓÃÔ­À´µÄµ÷É«°åÎ»ÖÃÔö¼ÓÑÚÂë.ÕâÀïÎÒÃÇÒÑ¾­Ôö¼ÓÁËÑÚÂë.
-//±£´æÎªrgb555¸ñÊ½ÔòĞèÒªÑÕÉ«×ª»»,ºÄÊ±¼ä±È½Ï¾Ã,ËùÒÔ±£´æÎª565ÊÇ×î¿ìËÙµÄ°ì·¨.
-//filename:´æ·ÅÂ·¾¶
-//x,y:ÔÚÆÁÄ»ÉÏµÄÆğÊ¼×ø±ê  
-//mode:Ä£Ê½.0,½ö½ö´´½¨ĞÂÎÄ¼şµÄ·½Ê½±àÂë;1,Èç¹ûÖ®Ç°´æÔÚÎÄ¼ş,Ôò¸²¸ÇÖ®Ç°µÄÎÄ¼ş.Èç¹ûÃ»ÓĞ,Ôò´´½¨ĞÂµÄÎÄ¼ş.
-//·µ»ØÖµ:0,³É¹¦;ÆäËû,´íÎóÂë.  
+//uint16_t databuf[640];				//æ•°æ®ç¼“å­˜åŒºåœ°å€
+//BMPç¼–ç å‡½æ•°
+//å°†å½“å‰LCDå±å¹•çš„æŒ‡å®šåŒºåŸŸæˆªå›¾,å­˜ä¸º16ä½æ ¼å¼çš„BMPæ–‡ä»¶ RGB565æ ¼å¼.
+//ä¿å­˜ä¸ºrgb565åˆ™éœ€è¦æ©ç ,éœ€è¦åˆ©ç”¨åŸæ¥çš„è°ƒè‰²æ¿ä½ç½®å¢åŠ æ©ç .è¿™é‡Œæˆ‘ä»¬å·²ç»å¢åŠ äº†æ©ç .
+//ä¿å­˜ä¸ºrgb555æ ¼å¼åˆ™éœ€è¦é¢œè‰²è½¬æ¢,è€—æ—¶é—´æ¯”è¾ƒä¹…,æ‰€ä»¥ä¿å­˜ä¸º565æ˜¯æœ€å¿«é€Ÿçš„åŠæ³•.
+//filename:å­˜æ”¾è·¯å¾„
+//x,y:åœ¨å±å¹•ä¸Šçš„èµ·å§‹åæ ‡
+//mode:æ¨¡å¼.0,ä»…ä»…åˆ›å»ºæ–°æ–‡ä»¶çš„æ–¹å¼ç¼–ç ;1,å¦‚æœä¹‹å‰å­˜åœ¨æ–‡ä»¶,åˆ™è¦†ç›–ä¹‹å‰çš„æ–‡ä»¶.å¦‚æœæ²¡æœ‰,åˆ™åˆ›å»ºæ–°çš„æ–‡ä»¶.
+//è¿”å›å€¼:0,æˆåŠŸ;å…¶ä»–,é”™è¯¯ç .
 uint8_t bmp_encode(void)
-{				
+{
 	FIL f_bmp;
-	uint16_t bmpheadsize;			//bmpÍ·´óĞ¡	   	
- 	BITMAPINFO hbmp;			//bmpÍ·	 
+	uint16_t bmpheadsize;			//bmpå¤´å¤§å°
+ 	BITMAPINFO hbmp;				//bmpå¤´
 	uint8_t res=0;
-	int16_t tx,ty;				   	//Í¼Ïñ³ß´ç   
- 	char fname[7]="00.bmp"; 
+	int16_t tx,ty;				   	//å›¾åƒå°ºå¯¸
+ 	char fname[7]="00.bmp";
 	char ShowInfo[22]="Save Picture...";
 	UINT bw;
 //	uint16_t r=0,g=0,b=0;
-      
-	bmpheadsize=sizeof(hbmp);//µÃµ½bmpÎÄ¼şÍ·µÄ´óĞ¡      
-	hbmp.bmiHeader.biSize=sizeof(BITMAPINFOHEADER);//ĞÅÏ¢Í·´óĞ¡
-	hbmp.bmiHeader.biWidth=320;	 	                //bmpµÄ¿í¶È
-	hbmp.bmiHeader.biHeight=240; 	                //bmpµÄ¸ß¶È
-	hbmp.bmiHeader.biPlanes=1;	 		            //ºãÎª1
-	hbmp.bmiHeader.biBitCount=16;	 	            //bmpÎª16Î»É«bmp
-	hbmp.bmiHeader.biCompression=BI_BITFIELDS;      //Ã¿¸öÏóËØµÄ±ÈÌØÓÉÖ¸¶¨µÄÑÚÂë¾ö¶¨¡£
- 	hbmp.bmiHeader.biSizeImage=hbmp.bmiHeader.biHeight*hbmp.bmiHeader.biWidth*hbmp.bmiHeader.biBitCount/8;//bmpÊı¾İÇø´óĞ¡
- 				   
-	hbmp.bmfHeader.bfType=((uint16_t)'M'<<8)+'B';   //BM¸ñÊ½±êÖ¾
-	hbmp.bmfHeader.bfSize=bmpheadsize+hbmp.bmiHeader.biSizeImage;//Õû¸öbmpµÄ´óĞ¡
-   	hbmp.bmfHeader.bfOffBits=bmpheadsize;           //µ½Êı¾İÇøµÄÆ«ÒÆ
 
-	hbmp.RGB_MASK[0]=0X00F800;	 		//ºìÉ«ÑÚÂë
-	hbmp.RGB_MASK[1]=0X0007E0;	 		//ÂÌÉ«ÑÚÂë
-	hbmp.RGB_MASK[2]=0X00001F;	 		//À¶É«ÑÚÂë
+	bmpheadsize=sizeof(hbmp);						//å¾—åˆ°bmpæ–‡ä»¶å¤´çš„å¤§å°
+	hbmp.bmiHeader.biSize=sizeof(BITMAPINFOHEADER);	//ä¿¡æ¯å¤´å¤§å°
+	hbmp.bmiHeader.biWidth=320;	 	                //bmpçš„å®½åº¦
+	hbmp.bmiHeader.biHeight=240; 	                //bmpçš„é«˜åº¦
+	hbmp.bmiHeader.biPlanes=1;	 		            //æ’ä¸º1
+	hbmp.bmiHeader.biBitCount=16;	 	            //bmpä¸º16ä½è‰²bmp
+	hbmp.bmiHeader.biCompression=BI_BITFIELDS;      //æ¯ä¸ªè±¡ç´ çš„æ¯”ç‰¹ç”±æŒ‡å®šçš„æ©ç å†³å®šã€‚
+ 	hbmp.bmiHeader.biSizeImage=hbmp.bmiHeader.biHeight*hbmp.bmiHeader.biWidth*hbmp.bmiHeader.biBitCount/8;//bmpæ•°æ®åŒºå¤§å°
+
+	hbmp.bmfHeader.bfType=((uint16_t)'M'<<8)+'B';   //BMæ ¼å¼æ ‡å¿—
+	hbmp.bmfHeader.bfSize=bmpheadsize+hbmp.bmiHeader.biSizeImage;//æ•´ä¸ªbmpçš„å¤§å°
+   	hbmp.bmfHeader.bfOffBits=bmpheadsize;           //åˆ°æ•°æ®åŒºçš„åç§»
+
+	hbmp.RGB_MASK[0]=0X00F800;	 		//çº¢è‰²æ©ç 
+	hbmp.RGB_MASK[1]=0X0007E0;	 		//ç»¿è‰²æ©ç 
+	hbmp.RGB_MASK[2]=0X00001F;	 		//è“è‰²æ©ç 
 
 	while(1)
 	{
-		res=f_open(&f_bmp,(const TCHAR*)fname,FA_READ|FA_WRITE);//³¢ÊÔ´ò¿ªÖ®Ç°µÄÎÄ¼ş
+		res=f_open(&f_bmp,(const TCHAR*)fname,FA_READ|FA_WRITE);//å°è¯•æ‰“å¼€ä¹‹å‰çš„æ–‡ä»¶
 		if(res==FR_OK)
 		{
 			f_close(&f_bmp);
 			res=(fname[0]-'0')*10+(fname[1]-'0')+1;
 			fname[0]=res/10+'0';
-			fname[1]=res%10+'0';		
+			fname[1]=res%10+'0';
 		}
 		else
 		{
@@ -58,90 +58,90 @@ uint8_t bmp_encode(void)
 				return 1;
 		}
 	}
- 
-	res=f_write(&f_bmp,(uint8_t*)&hbmp,bmpheadsize,&bw);//Ğ´ÈëBMPÊ×²¿  
 
-	LCD_setwindow(0,0,319,239); 
-	
+	res=f_write(&f_bmp,(uint8_t*)&hbmp,bmpheadsize,&bw);//å†™å…¥BMPé¦–éƒ¨
+
+	LCD_setwindow(0,0,319,239);
+
 	bmpheadsize=0;
 	for(ty=239;ty>=224;ty--)
 	{
 		for(tx=0;tx<320;tx++)
 		{
-			data2.databuf[bmpheadsize+tx]=LCD_ReadPoint(tx,ty);//¶ÁÈ¡×ø±êµãµÄÖµ   0x0460; //
+			data2.databuf[bmpheadsize+tx]=LCD_ReadPoint(tx,ty);//è¯»å–åæ ‡ç‚¹çš„å€¼   0x0460; //
 		}
 
 		if( (ty%2)==0 )
 		{
-			res=f_write(&f_bmp,(uint8_t*)data2.databuf,1280,&bw);//Ğ´ÈëÊı¾İ
+			res=f_write(&f_bmp,(uint8_t*)data2.databuf,1280,&bw);//å†™å…¥æ•°æ®
 			bmpheadsize=0;
 		}
 		else
 			bmpheadsize=320;
 	}
-	
+
 	strcat(ShowInfo,fname);
 	LCD_ShowString(0,224,ShowInfo,WHITE,BLACK);
-	LCD_setwindow(0,0,319,239); 
-	
+	LCD_setwindow(0,0,319,239);
+
 	bmpheadsize=0;
 	for(ty=223;ty>=0;ty--)
 	{
 		for(tx=0;tx<320;tx++)
 		{
-			data2.databuf[bmpheadsize+tx]=LCD_ReadPoint(tx,ty);//¶ÁÈ¡×ø±êµãµÄÖµ   0x0460; //
+			data2.databuf[bmpheadsize+tx]=LCD_ReadPoint(tx,ty);//è¯»å–åæ ‡ç‚¹çš„å€¼   0x0460; //
 		}
 
 		if( (ty%2)==0 )
 		{
-			res=f_write(&f_bmp,(uint8_t*)data2.databuf,1280,&bw);//Ğ´ÈëÊı¾İ
+			res=f_write(&f_bmp,(uint8_t*)data2.databuf,1280,&bw);//å†™å…¥æ•°æ®
 			bmpheadsize=0;
 		}
 		else
 			bmpheadsize=320;
 	}
-	
+
 //	for(ty=239;ty>=0;ty--)
 //	{
-//		LCD_SetCursor(0,ty);	    
-//		ILI9341_Write_Cmd(0x2E);//9341/6804/3510 ·¢ËÍ¶ÁGRAMÖ¸Áî
+//		LCD_SetCursor(0,ty);
+//		ILI9341_Write_Cmd(0x2E);//9341/6804/3510 å‘é€è¯»GRAMæŒ‡ä»¤
 //		ILI9341_DC_SET;
 //		ILI9341_WR_SET;
 //		ILI9341_CS_CLR;
-//		
-//		GPIO_CTL0(GPIOB) = 0x88888888; //PB0-7  ÉÏÀ­ÊäÈë 
-//		GPIO_CTL1(GPIOB) = 0x88888888; //PB8-15 ÉÏÀ­ÊäÈë
-//		GPIO_OCTL(ILI9341_DATA_PORT) = 0X0000;     //È«²¿Êä³ö0
-		
+//
+//		GPIO_CTL0(GPIOB) = 0x88888888; //PB0-7  ä¸Šæ‹‰è¾“å…¥
+//		GPIO_CTL1(GPIOB) = 0x88888888; //PB8-15 ä¸Šæ‹‰è¾“å…¥
+//		GPIO_OCTL(ILI9341_DATA_PORT) = 0X0000;     //å…¨éƒ¨è¾“å‡º0
+
 //		for(tx=0;tx<320;tx++)
-//		{					
-//			ILI9341_RD_CLR;       
-//			r=DATAIN;  
+//		{
+//			ILI9341_RD_CLR;
+//			r=DATAIN;
 //			ILI9341_RD_SET;
 //			ILI9341_RD_SET;
-//			
-//			ILI9341_RD_CLR;       
-//			r=DATAIN;  
+//
+//			ILI9341_RD_CLR;
+//			r=DATAIN;
 //			ILI9341_RD_SET;
 //			ILI9341_RD_SET;
-//			
-//			ILI9341_RD_CLR;       
-//			b=DATAIN;  
+//
+//			ILI9341_RD_CLR;
+//			b=DATAIN;
 //			ILI9341_RD_SET;
-//			
-//			g=r&0XFF;		       
+//
+//			g=r&0XFF;
 //			g<<=8;
-//			
+//
 //			data2.databuf[tx]=(((r>>11)<<11)|((g>>10)<<5)|(b>>11));
 //		}
-//		GPIO_CTL0(GPIOB) = 0X33333333; //PB0-7  ÉÏÀ­Êä³ö
-//		GPIO_CTL1(GPIOB) = 0X33333333; //PB8-15 ÉÏÀ­Êä³ö
-//		GPIO_OCTL(ILI9341_DATA_PORT) = 0XFFFF;    //È«²¿Êä³ö¸ß	
+//		GPIO_CTL0(GPIOB) = 0X33333333; //PB0-7  ä¸Šæ‹‰è¾“å‡º
+//		GPIO_CTL1(GPIOB) = 0X33333333; //PB8-15 ä¸Šæ‹‰è¾“å‡º
+//		GPIO_OCTL(ILI9341_DATA_PORT) = 0XFFFF;    //å…¨éƒ¨è¾“å‡ºé«˜
 
-//		res=f_write(&f_bmp,(uint8_t*)data2.databuf,640,&bw);//Ğ´ÈëÊı¾İ
+//		res=f_write(&f_bmp,(uint8_t*)data2.databuf,640,&bw);//å†™å…¥æ•°æ®
 //	}
 	f_close(&f_bmp);
-    
+
 	return res;
 }
 
@@ -151,9 +151,9 @@ uint8_t bmp_encode(void)
 //	{
 //		for(tx=0;tx<320;tx++)
 //		{
-//			data2.databuf[tx]=LCD_ReadPoint(tx,ty);//¶ÁÈ¡×ø±êµãµÄÖµ   0x0460; //
+//			data2.databuf[tx]=LCD_ReadPoint(tx,ty);//è¯»å–åæ ‡ç‚¹çš„å€¼   0x0460; //
 //		}
 
-//		res=f_write(&f_bmp,(uint8_t*)data2.databuf,640,&bw);//Ğ´ÈëÊı¾İ
+//		res=f_write(&f_bmp,(uint8_t*)data2.databuf,640,&bw);//å†™å…¥æ•°æ®
 //	}
 

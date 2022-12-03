@@ -549,7 +549,7 @@ int MLX90640_GetSubPageNumber(uint16_t *frameData)
 }    
 
 //------------------------------------------------------------------------------
-void MLX90640_BadPixelsCorrection(uint16_t *pixels, float *to, int mode, paramsMLX90640 *params)
+void MLX90640_BadPixelsCorrection(uint16_t *pixels, uint16_t *to, int mode, paramsMLX90640 *params)
 {   
     float ap[4];
     uint8_t pix;
@@ -557,11 +557,11 @@ void MLX90640_BadPixelsCorrection(uint16_t *pixels, float *to, int mode, paramsM
     uint8_t column;
     
     pix = 0;
-    while(pixels[pix]< 65535)
+    while (pixels[pix] < 65535)
     {
         line = pixels[pix]>>5;
         column = pixels[pix] - (line<<5);
-        
+
         if(mode == 1)
         {        
             if(line == 0)

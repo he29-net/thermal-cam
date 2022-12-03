@@ -2,14 +2,14 @@
 
 UnionData data;
 UnionData2 data2;
-//uint16_t mlx90640To[768];       //≤‚Œ¬∑∂Œß£∫-40~300 £¨∑≈¥Û10±∂£∫-400~3000£¨≤¢œÚ…œ∆Ω“∆400£∫0~3400 
+//uint16_t mlx90640To[768];       //ÊµãÊ∏©ËåÉÂõ¥Ôºö-40~300 ÔºåÊîæÂ§ß10ÂÄçÔºö-400~3000ÔºåÂπ∂Âêë‰∏äÂπ≥Áßª400Ôºö0~3400
 float Ta;
-float emissivity=0.95;  
+float emissivity = 0.95;
 
 paramsMLX90640 mlx90640;
 FATFS fs;
 
-usbd_core_handle_struct  usb_device_dev = 
+usbd_core_handle_struct  usb_device_dev =
 {
     .dev_desc = (uint8_t *)&device_descripter,
     .config_desc = (uint8_t *)&configuration_descriptor,
@@ -20,77 +20,88 @@ usbd_core_handle_struct  usb_device_dev =
     .class_data_handler = msc_data_handler
 };
 
-int main(void)  
-{  	
+int main(void)
+{
 	uint16_t statusRegister;
-	
+
 	delay_1ms(200);
 	mGPIO_Init();
 	ADC_DMA_Init();
-	SPI_Flash_Init();	
-	f_mount(&fs,"0:",1); 	
-	
-	exmc_lcd_init();                          /* configure the EXMC access mode */
-	lcd_init();                               /* initialize the LCD */	
-	Lcd_GramScan();	
+	SPI_Flash_Init();
+	f_mount(&fs, "0:", 1);
 
-	MLX90640_I2CInit();	
-	MLX90640_SetRefreshRate(MLX90640_ADDR, RefreshRate); 
-	MLX90640_SetChessMode(MLX90640_ADDR);	
+	exmc_lcd_init();                          	// configure the EXMC access mode
+	lcd_init();                               	// initialize the LCD
+	Lcd_GramScan();
+
+	MLX90640_I2CInit();
+	MLX90640_SetRefreshRate(MLX90640_ADDR, RefreshRate);
+	MLX90640_SetChessMode(MLX90640_ADDR);		// not needed? (should be default)
 	MLX90640_DumpEE(MLX90640_ADDR, data.mlx90640_Zoom10);
-	MLX90640_ExtractParameters(data.mlx90640_Zoom10, &mlx90640);	
-	
-	for(statusRegister=0;statusRegister<3;statusRegister++)
+	MLX90640_ExtractParameters(data.mlx90640_Zoom10, &mlx90640);
+
+	// get rid of the the first few images (all they contain are variants of the checker pattern)
+	// (takes up precious space and does not matter that much ‚Üí disable for now..)
+	/*
+	for (statusRegister = 0; statusRegister < 3; statusRegister++)
 	{
 		MLX90640_GetFrameData(MLX90640_ADDR, data.mlx90640_Zoom10);
-		Ta = MLX90640_GetTa(data.mlx90640_Zoom10, &mlx90640);    //∂¡»°MLX90640 Õ‚ø«Œ¬∂»	
-		MLX90640_CalculateTo(data.mlx90640_Zoom10, &mlx90640, emissivity , Ta - TA_SHIFT, data2.mlx90640To);	
+		Ta = MLX90640_GetTa(data.mlx90640_Zoom10, &mlx90640);    //ËØªÂèñMLX90640 Â§ñÂ£≥Ê∏©Â∫¶
+		MLX90640_CalculateTo(data.mlx90640_Zoom10, &mlx90640, emissivity , Ta - TA_SHIFT, data2.mlx90640To);
 		Disp_TempPic();
 	}
+	*/
 	ILI9341_BK_ON;
-	
-    while(1)
-	{		
+
+  while(1)
+	{
 		MLX90640_I2CRead(MLX90640_ADDR, 0x8000, 1, &statusRegister);
-		if(statusRegister & 0x0008)
+		if (statusRegister & 0x0008)
 		{
 			MLX90640_GetFrameData(MLX90640_ADDR, data.mlx90640_Zoom10);
-			Ta = MLX90640_GetTa(data.mlx90640_Zoom10, &mlx90640);    //∂¡»°MLX90640 Õ‚ø«Œ¬∂»	
+			Ta = MLX90640_GetTa(data.mlx90640_Zoom10, &mlx90640);    //ËØªÂèñMLX90640 Â§ñÂ£≥Ê∏©Â∫¶
 			MLX90640_CalculateTo(data.mlx90640_Zoom10, &mlx90640, emissivity , Ta - TA_SHIFT, data2.mlx90640To);
-	//		MLX90640_BadPixelsCorrection(mlx90640.brokenPixels, mlx90640To, 1, &mlx90640);
-	//		MLX90640_BadPixelsCorrection(mlx90640.outlierPixels, mlx90640To, 1, &mlx90640);		
+			// Optional filtering of bad pixels or outliers (hacked to work with uint32_t instead of float).
+			// (Useless? My sensor reports all pixels are perfect, even though there is one obvious bad outlier area..)
+			//MLX90640_BadPixelsCorrection(mlx90640.brokenPixels, data2.mlx90640To, 1, &mlx90640);
+			//MLX90640_BadPixelsCorrection(mlx90640.outlierPixels, data2.mlx90640To, 1, &mlx90640);
 			Disp_TempPic();
 		}
-		
-		//0  736  1932  2883 4073
-		if(ADCValue[1]<300)
+
+		//0  736  1932  2883 4073		// buttons working as a voltage divider?
+		if (ADCValue[1] < 300)			// first button = break out of image handling loop and initialize USB
 		{
 			ILI9341_BK_OFF;
 			break;
 		}
-		else if(ADCValue[1]<2350&&ADCValue[1]>1750)
+		else if (ADCValue[1] < 2350 && ADCValue[1] > 1750)			// second button = save BMP image
 		{
-			bmp_encode();
-			MLX90640_GetFrameData(MLX90640_ADDR, data.mlx90640_Zoom10);
-			Ta = MLX90640_GetTa(data.mlx90640_Zoom10, &mlx90640);    //∂¡»°MLX90640 Õ‚ø«Œ¬∂»	
+			bmp_encode();	// takes around 7k of code, good sacrifice to take while testing..
+			// this must be here just .. to refresh the data buffer after BPM encode?
+				// Or to get rid of the old data stuck in the sensor while writing the BPM..
+			// sadly, removing it saves almost no space..
+			// (only around 50 bytes? But.. combined with the first-frame thing may be just enough to reach the limit?)
+/*			MLX90640_GetFrameData(MLX90640_ADDR, data.mlx90640_Zoom10);
+			Ta = MLX90640_GetTa(data.mlx90640_Zoom10, &mlx90640);    //ËØªÂèñMLX90640 Â§ñÂ£≥Ê∏©Â∫¶
 			MLX90640_CalculateTo(data.mlx90640_Zoom10, &mlx90640, emissivity , Ta - TA_SHIFT, data2.mlx90640To);
+*/
 		}
-    }
-	
-    rcu_config();                            /* system clocks configuration */	 
+  }
+
+  rcu_config();                            /* system clocks configuration */
 	usbd_core_init(&usb_device_dev);         /* USB device configuration */
 	nvic_config();                           /* NVIC configuration */
 	USB_PULLUP_H();                          /* enabled USB pull-up */
 	usb_device_dev.status = USBD_CONNECTED;  /* now the usb device is connected */
-	while(usb_device_dev.status != USBD_CONFIGURED);
+	while (usb_device_dev.status != USBD_CONFIGURED);
 
-	while(1)
+	while (1)
 	{
-		if(ADCValue[1]<200)
+		if (ADCValue[1] < 200)	// wait for first button again
 		{
-			NVIC_SystemReset();	
-		}		
-	}		
+			NVIC_SystemReset();	// resets the whole CPU so that it ends up in the image loop again.. uh, kinda nasty..
+		}
+	}
 }
 
 //		if(debug)
@@ -102,27 +113,21 @@ int main(void)
 //	res = f_mkfs("0:", 0, 0);
 //	res = f_open(&fil, "hello.txt", FA_CREATE_NEW | FA_WRITE);
 //	f_write(&fil, "Hello, World!\r\n", 15, &bw);
-	
-	
+
+
 //	res = f_getfree("0", &fre_clust, &fs1);
-//	tot_sect=(fs1->n_fatent-2)*fs1->csize;    //µ√µΩ◊‹…»«¯ ˝
-//	fre_sect=fre_clust*fs1->csize;            //µ√µΩø’œ–…»«¯ ˝	
-	
+//	tot_sect=(fs1->n_fatent-2)*fs1->csize;    //ÂæóÂà∞ÊÄªÊâáÂå∫Êï∞
+//	fre_sect=fre_clust*fs1->csize;            //ÂæóÂà∞Á©∫Èó≤ÊâáÂå∫Êï∞
+
 //	res = f_open(&fil, "hello.txt", FA_OPEN_EXISTING | FA_READ);
 //	f_read(&fil,data,10,&bw);
-//	
+//
 //	f_close(&fil);
-	
+
 //	debug=SPI_Flash_ReadID();
 //	SPI_Flash_Write(data,0,10);
 //	data[0]=0;data[1]=0;data[2]=0;data[3]=0;data[4]=0;data[5]=0;data[6]=0;data[7]=0;
 //	SPI_Flash_Read(data,0,10);
-
-
-
-
-
-
 
 
 static void system_clock_96m_hxtal(void)
@@ -130,9 +135,9 @@ static void system_clock_96m_hxtal(void)
     /* select PLL as system clock */
     RCU_CFG0 &= ~RCU_CFG0_SCS;
     RCU_CFG0 |= RCU_CKSYSSRC_HXTAL;
-	
-	RCU_CTL &= ~RCU_CTL_PLLEN;  //PLL ßƒ‹
-	
+
+	  RCU_CTL &= ~RCU_CTL_PLLEN;  //PLLÂ§±ËÉΩ
+
     /* CK_PLL = (CK_HXTAL/2) * 24 = 96 MHz */
     RCU_CFG0 &= ~(RCU_CFG0_PLLMF | RCU_CFG0_PLLMF_4);
     RCU_CFG0 |= RCU_PLL_MUL24;
@@ -161,11 +166,11 @@ static void system_clock_96m_hxtal(void)
 */
 void rcu_config(void)
 {
-	system_clock_96m_hxtal();
-	
-    /* enable USB pull-up pin clock */ 
+	  system_clock_96m_hxtal();
+
+    /* enable USB pull-up pin clock */
     rcu_periph_clock_enable(RCU_GPIOA);
-	
+
     /* enable the power clock */
     rcu_periph_clock_enable(RCU_PMU);
 
@@ -190,4 +195,3 @@ void nvic_config(void)
     /* enable the USB low priority interrupt */
     nvic_irq_enable(USBD_LP_CAN0_RX0_IRQn, 1, 0);
 }
-
