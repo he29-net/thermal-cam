@@ -6,17 +6,27 @@ Board schematics were made in Altium designer and can be viewed in the free web 
 
 My goal is simply to make the firmware a bit more polished, flexible and up to date with recently available tools.
 
-## Initial changes
- - sources cleaned up a bit and converted to UTF-8
- - disabled a few pieces of code to get program size under the linker limit of Keil v5 MDK non-commercial version
- - moved battery icon to the left (in preparation for other changes)
+## Changes so far
+ - new features:
+	- buttons now control a simple menu (left button selects action, right button activates it / cycles values)
+	- runtime selectable FPS (default 4 FPS is often quite noisy, but 1 FPS is often too slow..)
+	- todo: runtime selectable emissivity
+ - battery indicator:
+	- moved to the left to make space for action selector
+	- different colors / drawing style to make it clearer which part means full and which empty
+	- voltage considered "full" changed from 4.2 V to 3.8 V (Li-ion drops off fast, despite still being almost full)
+ - code rework (WIP):
+	- sources cleaned up a bit and converted to UTF-8
+	- reduced code size to fit all features under the linker limit of Keil v5 MDK non-commercial version
 
-## Planned changes
- - runtime selectable FPS (default 4 FPS is often quite noisy, but 1 FPS is often too slow..)
- - rework drawing code
-	- fix glitches at high temperatures
-	- reduce code size to make room for other features
-	- improve performance to allow 8 FPS display rate (16 Hz sampling)
+## Known issues
+ - BPM saving is broken (files contain only blue color or are otherwise incomplete)
+ - drawing code:
+	- glitches at high temperatures not yet fixed
+	- 8 FPS display rate seems glitchy as well (disabled by default; not enough performance?)
+	- maximum temperature may overlap with menu value
+
+## Long term plans
  - support a newer compiler (or better, a FOSS toolchain, to get rid of the 32k limitation)
  - translate, add, and improve comments
  - different color mappings?

@@ -1,4 +1,5 @@
 #include "MLX90640.h"
+#include "config.h"
 
 /*
 MLX90640 的测量速率最高可以达到 64Hz，但越快的速率时的噪声会越大，导致灵敏度下降，手册上给出的指标是 1Hz 时可以区分出 0.1℃。
@@ -92,6 +93,14 @@ const uint16_t camColors[] = {
 const uint8_t Pos_x[] = {159,155,150,145,140,134,129,124,119,114,109,103,98, 93, 88, 83, 78, 72, 67, 62, 57, 52, 47, 41, 36, 31, 26, 21, 16, 10, 5, 0};
 //						 0	 1	 2	 3	 4	 5	 6	 7	 8	 9	 10  11  12  13  14  15  16  17  18  19  20  21  22  23
 const uint8_t Pos_y[] = {0,  5,  10, 16, 21, 26, 31, 37, 42, 47, 52, 57, 63, 68, 73, 78, 84, 89, 94, 99, 104,110,115,119};
+
+uint16_t max, min;	// Maximum and minimum value found in current frame (global to avoid redundant parameters)
+uint16_t scale;		// TODO: some scaling factor based on min/max
+
+#ifdef PROFILE
+int16_t diff = 0;
+#endif
+
 /**********************************************************************************************************
 *	函 数 名：Disp_TempPic
 *	功能说明：显示温度图像
@@ -105,13 +114,17 @@ const uint8_t Pos_y[] = {0,  5,  10, 16, 21, 26, 31, 37, 42, 47, 52, 57, 63, 68,
 #define scale_x   198  //0.19375 * 1024
 #define scale_y   196  //0.19166 * 1024
 
-int Disp_TempPic(void)
+void Disp_TempPic(void)
 {
 	uint16_t x, y, color, adr;
-	uint16_t max, min, scale, dst;
+	uint16_t dst;
 	uint16_t Pos_max, Pos_min;
 	uint16_t fx, fy, cbufx[2], cbufy[2];
 	uint8_t  sx, sy;
+
+#ifdef PROFILE
+	SysTick->VAL = 0xffffff;
+#endif
 
 	max = 0; min = 3400;	//测温范围是-40~300℃,温度值放大了10倍：-400~3000，并向上平移400：0~3400
 	for (x = 0; x < 768; x++)
@@ -461,7 +474,7 @@ int Disp_TempPic(void)
 		}
 	}
 
-	/********************************* 220-229行(110-114) 显示辐射系数、中心温度、外壳温度上半部分 *****************************************************/
+	/*************** 220-229行(110-114) 显示辐射系数、中心温度、外壳温度上半部分 ***********************************/
 	adr = 0;
 	for (; y < 115; y++)
 	{
@@ -507,6 +520,13 @@ int Disp_TempPic(void)
 	Buf_SmallFloatNum(140, 2, data2.mlx90640To[368] - 400, BUF_BLACK, 0);	//中心温度
 	Buf_ShowString(240, 2, "Ta:", BUF_BLACK, 0);
 	Buf_SmallFloatNum(264, 2, Ta * 10, BUF_BLACK, 0);						//外壳温度
+
+#ifdef PROFILE
+	// this old code apparently takes around 24 ms (without the last line)
+	diff = (0xFFFFFF - SysTick->VAL) / 11888;	// counting down
+	Buf_ShowNum(70, 2, diff, BUF_BLACK, 0);
+	Buf_ShowString(100, 2, "ms", BUF_BLACK, 0);
+#endif
 
 	for (x = 0; x < adr; x++)
 	{
@@ -560,6 +580,11 @@ int Disp_TempPic(void)
 	Buf_ShowString(240, 0, "Ta:", BUF_BLACK, 1);
 	Buf_SmallFloatNum(264, 0, Ta * 10, BUF_BLACK, 1);						//外壳温度
 
+#ifdef PROFILE
+	Buf_ShowNum(70, 0, diff, BUF_BLACK, 1);
+	Buf_ShowString(100, 0, "ms", BUF_BLACK, 1);
+#endif
+
 	for (x = 0; x < adr; x++)
 	{
 		ILI9341_Write_Data1(camColors[data.DisBuf[x]]);
@@ -579,49 +604,241 @@ int Disp_TempPic(void)
 		LCD_Fill(x - 7, y, x + 7, y, GREEN);	  //x
 		LCD_Fill(x, y - 7, x, y + 7, GREEN);	  //y 最小值中心+字标
 	}
+
 }
 
-//uint16_t color_add;
-//void Disp_test()
-//{
-//	uint16_t x,y,color;
-//
-//	LCD_setwindow(0,0,319,239);
-//	ILI9341_DC_SET;
-//	ILI9341_CS_CLR;
-//	for(y = 0;y<240;y++)
-//	{
-//		color_add=0;
-//		for(x = 0;x<320;x++)
-//		{
-//			color_add+=10;
-//			DATAOUT(color_add);
-//			ILI9341_WR_CLR;
-//			ILI9341_WR_SET;
-//		}
-//	}
-//
-//	for(x = 0;x<320;x++)
-//	{
-//		data2.databuf[x]=LCD_ReadPoint(x,0);
-//	}
-//}
 
-//	color_add+=300;
-////	LED_IO_HIGH();
-//
-//	LCD_setwindow(0,0,319,239);
-//	ILI9341_DC_SET;
-//	ILI9341_CS_CLR;
-//	for(y = 0;y<240;y++)
-//		for(x = 0;x<320;x++)
-//		{
-//
-//			DATAOUT(color_add);
-//			ILI9341_WR_CLR;
-//			ILI9341_WR_SET;
-////			ILI9341_CS_SET;
-//		}
-//
-////	LED_IO_LOW();
-//	delay_1ms(500);
+// Draw specified lines of the thermal image to the display buffer or directly to the display
+void draw_thermal(uint8_t start, uint8_t end, bool direct) {
+	uint16_t x, y, color, adr;
+	uint16_t dst;
+	uint16_t fx, fy, cbufx[2], cbufy[2];
+	uint8_t  sx, sy;
+
+	if (!direct && end - start + 1 > 10) {
+		for (x = 0; x < 2 * DST_MAX_X; x++) {
+			data.DisBuf[adr++] = 253;	// red (or other hottest non-GUI color)
+		}
+		return;	// out of range for buffered draw
+	}
+
+	adr = 0;
+	start /= 2;
+	end /= 2;
+	fy = start * scale_y;
+	for (y = start; y <= end; y++) {
+		sy = fy >> 10;						//SrcX中的整数 / integer in SrcX (?)
+
+		cbufy[1] = fy & 0x3FF;				//v
+		cbufy[0] = 1024 - cbufy[1];			//1-v
+
+		fy += scale_y;
+
+		fx = 0;
+		for (x = 0; x < DST_MAX_X; x++)
+		{
+			sx = fx >> 10;						//SrcX中的整数
+
+			cbufx[1] = fx & 0x3FF;				//u
+			cbufx[0] = 1024 - cbufx[1];			//1-u
+
+			fx += scale_x;
+
+			// interpolation?		//TODO: possible reason for first and last lines bug (cbufy not preserved)
+			color = sy * 32 + 31 - sx;
+			dst = ( data2.mlx90640To[color	   ] * cbufx[0] * cbufy[0] +
+					data2.mlx90640To[color + 32] * cbufx[0] * cbufy[1] +
+					data2.mlx90640To[color -  1] * cbufx[1] * cbufy[0] +
+					data2.mlx90640To[color + 31] * cbufx[1] * cbufy[1]) >> 20;
+
+			dst = ((dst - min) * scale) / 10;
+
+			// Drawing is done at half resolution, each pixel and line is duplicated
+			data.DisBuf[adr++] = dst;
+			data.DisBuf[adr++] = dst;
+		}
+
+		if (direct) {
+			// Skip the buffer and write directly to the LCD
+			for (uint8_t i = 0; i < 2; i++) {
+				for (x = 0; x < 2 * DST_MAX_X; x++) {
+					ILI9341_Write_Data1(camColors[data.DisBuf[x]]);
+				}
+			}
+			adr = 0;	// Reset the buffer so it does not overflow (direct writes tend to be long)
+		} else {
+			// Just duplicate the finished line
+			for (x = 0; x < 2 * DST_MAX_X; x++) {
+				data.DisBuf[adr++] = data.DisBuf[adr - 2 * DST_MAX_X];
+			}
+		}
+	}
+}
+
+
+void write_buffer(uint8_t lines) {
+	for (uint16_t x = 0; x < lines * 320; x++) {
+		ILI9341_Write_Data1(camColors[data.DisBuf[x]]);
+	}
+}
+
+
+// Draw the thermal image and GUI overlay to the display.
+// Due to memory limitation, the work buffer is very small and data must be dumped to the LCD every 10 lines.
+void Disp_TempNew(void)
+{
+	uint16_t x, y;
+	uint16_t Pos_max, Pos_min;
+
+#ifdef PROFILE
+	SysTick->VAL = 0xffffff;
+#endif
+
+	// Measurement range is -40 to 300 °C, sensor returns 10 * (x + 40), i.e. 0 to 3400.
+	// 测温范围是-40~300℃,温度值放大了10倍：-400~3000，并向上平移400：0~3400
+
+	// Find the minimum and maximum across all measured values
+	max = 0; min = 3400;
+	for (x = 0; x < 768; x++)
+	{
+		if (data2.mlx90640To[x] > max) {max = data2.mlx90640To[x]; Pos_max = x;}
+		if (data2.mlx90640To[x] < min) {min = data2.mlx90640To[x]; Pos_min = x;}
+	}
+
+//	if (max - min > 2550 || max == min) {printf("max=%d, min=%d***************\r\n",max,min); return 1;}
+	scale = 2530 / (max - min);
+//	printf("max=%d,min=%d,scale=%d \r\n", max, min, scale);
+
+// this can't work correctly: 2530 is likely used to avoid the last 2 LUT colors that are used for GUI (black, white)
+// But even if they are available: temp. diff. larger than ~250 °C would result in scale = 0
+// → that's the "purple screen bug" when looking at a candle flame etc.
+
+
+	// Prepare the display to receive a new full frame
+	LCD_setwindow(0, 0, 319, 239);
+	ILI9341_DC_SET;
+	ILI9341_CS_CLR;
+
+	// There is no space for a frame buffer in the ARM, so everything is done in thin 10 pixel strips that fit.
+
+	// Top GUI
+	// 0..9: Battery icon, color scale, menu text.
+	draw_thermal(0, 9, false);
+	Disp_BatPower();
+	// color scale (without last two values used for white / black GUI elements)
+	for (y = 3; y <= 8; y++) {
+		uint16_t adr = 320 * y + 30;
+		for (x = 0; x < 254; x++) {
+			data.DisBuf[adr++] = x;
+		}
+	}
+	// Draw compact menu text (selected action). Only 4 lower-case characters will fit.
+	// Set menu_tweak to 0 if you need to use letters that reach the bottom line (gpqy).
+	// Otherwise set menu_tweak to 2 to avoid cutting the top of tall letters (bdfhiklt). "j" won't fit either way.
+	Buf_ShowString(287, menu_tweak, menu_text, BUF_BLACK, 2);
+	write_buffer(10);
+
+	// 10..19: Top half of min / max temperature readings and menu value.
+	draw_thermal(10, 19, false);
+	Buf_SmallFloatNum(30, 2, min - 400, BUF_BLACK, 0);
+//	Buf_SmallFloatNum(96, 2, (ADCValue[0] * 660) >> 12, BUF_BLACK, 0);		// battery voltage debug
+	Buf_SmallFloatNum(236, 2, max - 400, BUF_BLACK, 0);
+	Buf_ShowString(288, 2, menu_value, BUF_BLACK, 0);
+	write_buffer(10);
+
+
+	// 20..29: Bottom half of min / max temperature readings and menu value.
+	draw_thermal(20, 29, false);
+	Buf_SmallFloatNum(30, 0, min - 400, BUF_BLACK, 1);
+//	Buf_SmallFloatNum(96, 0, (ADCValue[0]*660) >> 12, BUF_BLACK, 1);
+	Buf_SmallFloatNum(236, 0, max - 400, BUF_BLACK, 1);
+	Buf_ShowString(288, 0, menu_value, BUF_BLACK, 1);
+	write_buffer(10);
+
+
+	// Middle section: direct draw without GUI
+	draw_thermal(30, 115, true);
+
+	// Draw cross to the buffer (direct draw to display would cause visible blinking)
+	draw_thermal(116, 125, false);
+	Buf_Fill(156, 5, 164, 5, BUF_WHITE);  //x 160
+	Buf_Fill(160, 1, 160, 9, BUF_WHITE);  //y 120 中心+字标
+	write_buffer(10);
+
+	draw_thermal(126, 219, true);	// direct draw without GUI
+
+
+	// Bottom GUI
+	draw_thermal(220, 229, false);
+	// draw emissivity, profiler, Tc, Ta
+	Buf_ShowString(4, 2, "e=0.", BUF_BLACK, 0);
+	Buf_ShowNum(36, 2, emissivity * 100, BUF_BLACK, 0);						//辐射系数
+#ifdef PROFILE
+	Buf_ShowNum(70, 2, diff, BUF_BLACK, 0);
+	Buf_ShowString(100, 2, "ms", BUF_BLACK, 0);
+#endif
+//	Buf_SmallFloatNum(140, 2, center - 400, BUF_BLACK, 0);					//中心温度
+	Buf_SmallFloatNum(140, 2, data2.mlx90640To[368] - 400, BUF_BLACK, 0);	//中心温度	/ center temperature
+	Buf_ShowString(240, 2, "Ta:", BUF_BLACK, 0);
+	Buf_SmallFloatNum(264, 2, Ta * 10, BUF_BLACK, 0);						//外壳温度	/ ambient temperature
+	write_buffer(10);
+
+	draw_thermal(230, 239, false);
+	// draw emissivity, profiler, Tc, Ta
+	Buf_ShowString(4, 0, "e=0.", BUF_BLACK, 1);
+	Buf_ShowNum(36, 0, emissivity * 100, BUF_BLACK, 1);						//辐射系数
+#ifdef PROFILE
+	Buf_ShowNum(70, 0, diff, BUF_BLACK, 1);
+	Buf_ShowString(100, 0, "ms", BUF_BLACK, 1);
+#endif
+//	Buf_SmallFloatNum(140, 0, center - 400, BUF_BLACK, 1);					//中心温度
+	Buf_SmallFloatNum(140, 0, data2.mlx90640To[368] - 400, BUF_BLACK, 1);	//中心温度
+	Buf_ShowString(240, 0, "Ta:", BUF_BLACK, 1);
+	Buf_SmallFloatNum(264, 0, Ta * 10, BUF_BLACK, 1);						//外壳温度
+	write_buffer(10);
+
+
+	// Final overlay: min / max coordinates (direct draw: they move around so blinking is not noticeable)
+	if (Pos_max > 31)
+	{
+		x = Pos_x[Pos_max % 32] * 2;
+		y = Pos_y[Pos_max / 32] * 2;
+		LCD_Fill(x - 7, y, x + 7, y, MAGENTA);	  //x
+		LCD_Fill(x, y - 7, x, y + 7, MAGENTA);	  //y 最大值中心+字标
+	}
+	if (Pos_min > 31)
+	{
+		x = Pos_x[Pos_min % 32] * 2;
+		y = Pos_y[Pos_min / 32] * 2;
+		LCD_Fill(x - 7, y, x + 7, y, GREEN);	  //x
+		LCD_Fill(x, y - 7, x, y + 7, GREEN);	  //y 最小值中心+字标
+	}
+
+
+#ifdef PROFILE
+	diff = (0xFFFFFF - SysTick->VAL) / 11888;	// counting down
+#endif
+
+}
+
+
+
+// display repeating pattern
+void Disp_test(void)
+{
+	uint16_t x, y;
+
+	LCD_setwindow(0, 0, 319, 239);
+	ILI9341_DC_SET;
+	ILI9341_CS_CLR;
+
+	for (y = 0; y < 240; y++)
+	{
+		for (x = 0; x < 320; x++)
+		{
+			DATAOUT(((32 - x/20 + y/16) << 10) + (y/8 << 5) + x/10);
+			ILI9341_WR_CLR;
+			ILI9341_WR_SET;
+		}
+	}
+}

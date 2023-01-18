@@ -94,6 +94,8 @@ void ACSig_In_Capture_Init(void)  //TIM2_CH0    AC_SIG-PB4
     timer_enable(TIMER2);	
 }
 
+
+
 /**********************************************************************************************************
 *	函 数 名：PWMOut_LCD_BK_Init
 *	功能说明：TFT背光PWM初始化
@@ -222,5 +224,4 @@ void Set_LCD_Bk(uint32_t pulse)
 //        gd_eval_led_toggle();
 //    }
 //}
-
 

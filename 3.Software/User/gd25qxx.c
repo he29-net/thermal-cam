@@ -169,13 +169,13 @@ void SPI_Flash_Write_NoCheck(uint8_t* pBuffer,uint32_t WriteAddr,uint16_t NumByt
 		}
 	};	    
 } 
-//写SPI FLASH  
-//在指定地址开始写入指定长度的数据
-//该函数带擦除操作!
-//pBuffer:数据存储区
-//WriteAddr:开始写入的地址(24bit)
-//NumByteToWrite:要写入的字节数(最大65535)  		   
-void SPI_Flash_Write(uint8_t* pBuffer,uint32_t WriteAddr,uint16_t NumByteToWrite)   
+//写SPI FLASH  								SPI Flash write
+//在指定地址开始写入指定长度的数据			Write specified number of bytes to a specified address.
+//该函数带擦除操作!							Erase operation is performed as a part of the write sequence.
+//pBuffer:数据存储区						pBuffer: data buffer to be written
+//WriteAddr:开始写入的地址(24bit)			WriteAddr: write starting from this address (24 bits)
+//NumByteToWrite:要写入的字节数(最大65535)	NumByteToWrite: max. 65565
+void SPI_Flash_Write(uint8_t* pBuffer, uint32_t WriteAddr, uint16_t NumByteToWrite)
 { 
 	uint32_t secpos;
 	uint16_t secoff;

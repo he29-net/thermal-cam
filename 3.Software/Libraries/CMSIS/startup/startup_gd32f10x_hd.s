@@ -40,7 +40,7 @@
 ;   <o> Stack Size (in Bytes) <0x0-0xFFFFFFFF:8>
 ; </h>
 
-Stack_Size          EQU     0x00000B70  ;0x00002B40
+Stack_Size          EQU     0x00000800  ; observed maximum: 0x73A; 0xB40 (upstream) leaves no space for other features
 
                     AREA    STACK, NOINIT, READWRITE, ALIGN = 3
 Stack_Mem           SPACE   Stack_Size

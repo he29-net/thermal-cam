@@ -50,13 +50,23 @@ OF SUCH DAMAGE.
 void systick_config(void)
 {
     /* setup systick timer for 1000Hz interrupts */
-    if (SysTick_Config(SystemCoreClock / 1000U)){
+//    if (SysTick_Config(SystemCoreClock / 1000U)){
         /* capture error */
-        while (1){
-        }
-    }
+//        while (1){
+ //       }
+  //  }
     /* configure the systick handler priority */
-    NVIC_SetPriority(SysTick_IRQn, 0x00U);
+//    NVIC_SetPriority(SysTick_IRQn, 0x00U);
+
+    /* systick clock source is from HCLK/8 */
+    systick_clksource_set(SYSTICK_CLKSOURCE_HCLK_DIV8);
+
+    /* reload the count value */
+    SysTick->LOAD = 1000*1800U;
+    /* clear the current count value */
+    SysTick->VAL = 0x0000U;
+    /* enable the systick timer */
+    SysTick->CTRL = SysTick_CTRL_ENABLE_Msk;
 }
 
 /*!

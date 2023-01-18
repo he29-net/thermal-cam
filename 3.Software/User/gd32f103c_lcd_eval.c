@@ -60,28 +60,29 @@ void exmc_lcd_init(void)
 	gpio_init(ILI9341_DATA_PORT, GPIO_MODE_OUT_PP, GPIO_OSPEED_50MHZ, ILI9341_DATA_PIN);
 }
 
-void ILI9341_Write_Cmd ( uint16_t usCmd )
+void ILI9341_Write_Cmd(uint16_t usCmd)
 {
-	ILI9341_CS_CLR;//开始片选
-	ILI9341_DC_CLR;//写命令
-	ILI9341_RD_SET;//禁止读
-	DATAOUT(usCmd);//输出命令
-	ILI9341_WR_CLR;//写入开始
-	ILI9341_WR_SET;//写入结束
-	ILI9341_CS_SET;//结束片选
+	ILI9341_CS_CLR;	// 开始片选	/ start chip select
+	ILI9341_DC_CLR;	// 写命令	/ write command
+	ILI9341_RD_SET;	// 禁止读	/ disable reading
+	DATAOUT(usCmd);	// 输出命令	/ output command
+	ILI9341_WR_CLR;	// 写入开始	/ start of write
+	ILI9341_WR_SET;	// 写入结束	/ end of write
+	ILI9341_CS_SET;	// 结束片选	/ end chip select
 }
+
 
 /**
   * @brief  从ILI9341读取数据
   * @param  无
   * @retval 读取到的数据
   */
-uint16_t ILI9341_Read_Data ( void )
+uint16_t ILI9341_Read_Data(void)
 {
 	uint16_t data;
- 	GPIO_CTL0(GPIOB) = 0x88888888; //PB0-7  上拉输入
-	GPIO_CTL1(GPIOB) = 0x88888888; //PB8-15 上拉输入
-	GPIO_OCTL(ILI9341_DATA_PORT) = 0X0000;     //全部输出0
+ 	GPIO_CTL0(GPIOB) = 0x88888888;				// PB0-7  上拉输入
+	GPIO_CTL1(GPIOB) = 0x88888888;				// PB8-15 上拉输入
+	GPIO_OCTL(ILI9341_DATA_PORT) = 0x0000;		// 全部输出0
 
 	ILI9341_DC_SET;
 	ILI9341_WR_SET;
@@ -94,11 +95,12 @@ uint16_t ILI9341_Read_Data ( void )
 	ILI9341_RD_SET;
 	ILI9341_CS_SET;
 
-	GPIO_CTL0(GPIOB) = 0X33333333; //PB0-7  上拉输出
-	GPIO_CTL1(GPIOB) = 0X33333333; //PB8-15 上拉输出
-	GPIO_OCTL(ILI9341_DATA_PORT) = 0XFFFF;    //全部输出高
+	GPIO_CTL0(GPIOB) = 0x33333333; //PB0-7  上拉输出
+	GPIO_CTL1(GPIOB) = 0x33333333; //PB8-15 上拉输出
+	GPIO_OCTL(ILI9341_DATA_PORT) = 0xFFFF;    //全部输出高
 	return data;
 }
+
 
 void lcd_init(void)
 {
@@ -203,7 +205,7 @@ void lcd_init(void)
 	ILI9341_Write_Data(0x00);
 
 	/* Negative Gamma Correction (E1h) */
-	ILI9341_Write_Cmd(0XE1); //Set Gamma
+	ILI9341_Write_Cmd(0xE1); //Set Gamma
 	ILI9341_Write_Data(0x00);
 	ILI9341_Write_Data(0x19);
 	ILI9341_Write_Data(0x1B);
@@ -227,7 +229,7 @@ void lcd_init(void)
 //	delay_1ms(5);
 
 //	/* column address control set 列地址设置 */
-//	ILI9341_Write_Cmd(0X2A);
+//	ILI9341_Write_Cmd(0x2A);
 //	ILI9341_Write_Data(0x00);
 //	ILI9341_Write_Data(0x00);  //列开始地址  0
 //	ILI9341_Write_Data(0x01);
@@ -235,7 +237,7 @@ void lcd_init(void)
 //
 //	/* page address control set 行地址设置 */
 //	delay_1ms(5);
-//	ILI9341_Write_Cmd(0X2B);
+//	ILI9341_Write_Cmd(0x2B);
 //	ILI9341_Write_Data(0x00);
 //	ILI9341_Write_Data(0x00);  //行开始地址  0
 //	ILI9341_Write_Data(0x00);
@@ -257,6 +259,7 @@ void lcd_init(void)
 //	/* write gram start */
 //	ILI9341_Write_Cmd(0x2C);
 }
+
 
 /* 设置液晶GRAM的扫描方向
  * 当设置成不同的扫描模式时, page(即x) 跟 column(即y) 的值是会改变的
@@ -282,6 +285,7 @@ void Lcd_GramScan(void)
 	ILI9341_Write_Cmd(0x2C);
 }
 
+
 //设置光标位置
 //Xpos:横坐标
 //Ypos:纵坐标
@@ -294,38 +298,41 @@ void LCD_SetCursor(uint16_t Xpos, uint16_t Ypos)
 	ILI9341_Write_Data(Ypos >> 8);
 	ILI9341_Write_Data(Ypos & 0xFF);
 }
-//读取个某点的颜色值
-//x,y:坐标
-//返回值:此点的颜色
-//uint16_t LCD_ReadPoint(uint16_t x,uint16_t y)
+
+
+// 读取个某点的颜色值 / Read the color value of a certain point
+// x, y : 坐标 / Coordinates
+// 返回值:此点的颜色 / Return: color value
+
+//uint16_t LCD_ReadPoint(uint16_t x, uint16_t y)
 //{
-// 	uint16_t r=0,g=0,b=0;
+// 	uint16_t r = 0, g = 0, b = 0;
 //
 //	LCD_SetCursor(x,y);
-//	ILI9341_Write_Cmd(0X2E);//9341/6804/3510 发送读GRAM指令
+//	ILI9341_Write_Cmd(0x2E);	// 9341/6804/3510 发送读GRAM指令
 //
-// 	ILI9341_Read_Data();									//dummy Read
+// 	ILI9341_Read_Data();		// dummy Read
 //	Delay_50ns(2);
-// 	r=ILI9341_Read_Data();  		  						//实际坐标颜色
+// 	r = ILI9341_Read_Data();	// 实际坐标颜色
 
 //	Delay_50ns(2);
-//	b=ILI9341_Read_Data();
-//	g=r&0XFF;		       //对于9341/5310/5510,第一次读取的是RG的值,R在前,G在后,各占8位
-//	g<<=8;
+//	b = ILI9341_Read_Data();
+//	g = r & 0xFF;	       		// 对于9341/5310/5510,第一次读取的是RG的值,R在前,G在后,各占8位
+//	g <<= 8;
 //
-//	return (((r>>11)<<11)|((g>>10)<<5)|(b>>11));//ILI9341/NT35310/NT35510需要公式转换一下
+//	return (((r >> 11) << 11) | ((g >> 10) << 5) | (b >> 11));	// ILI9341/NT35310/NT35510需要公式转换一下
 //}
 
 uint16_t LCD_ReadPoint(uint16_t x, uint16_t y)
 {
- 	uint16_t r = 0,g = 0,b = 0;
+ 	uint16_t r = 0, g = 0, b = 0;
 
 	LCD_SetCursor(x, y);
-	ILI9341_Write_Cmd(0X2E);
+	ILI9341_Write_Cmd(0x2E);
 
- 	GPIO_CTL0(GPIOB) = 0x88888888; //PB0-7  上拉输入
-	GPIO_CTL1(GPIOB) = 0x88888888; //PB8-15 上拉输入
-	GPIO_OCTL(ILI9341_DATA_PORT) = 0X0000;     //全部输出0
+ 	GPIO_CTL0(GPIOB) = 0x88888888;				// PB0-7  上拉输入
+	GPIO_CTL1(GPIOB) = 0x88888888;				// PB8-15 上拉输入
+	GPIO_OCTL(ILI9341_DATA_PORT) = 0x0000;		// 全部输出0
 
 	ILI9341_DC_SET;
 	ILI9341_WR_SET;
@@ -343,15 +350,16 @@ uint16_t LCD_ReadPoint(uint16_t x, uint16_t y)
 	ILI9341_RD_SET;
 	ILI9341_CS_SET;
 
-	GPIO_CTL0(GPIOB) = 0X33333333; //PB0-7  上拉输出
-	GPIO_CTL1(GPIOB) = 0X33333333; //PB8-15 上拉输出
-	GPIO_OCTL(ILI9341_DATA_PORT) = 0XFFFF;    //全部输出高
+	GPIO_CTL0(GPIOB) = 0x33333333;				// PB0-7  上拉输出
+	GPIO_CTL1(GPIOB) = 0x33333333;				// PB8-15 上拉输出
+	GPIO_OCTL(ILI9341_DATA_PORT) = 0xFFFF;		// 全部输出高
 
-	g = r & 0XFF;		       //对于9341/5310/5510,第一次读取的是RG的值,R在前,G在后,各占8位
+	g = r & 0xFF;		       //对于9341/5310/5510,第一次读取的是RG的值,R在前,G在后,各占8位
 	g <<= 8;
 
 	return (((r >> 11) << 11) | ((g >> 10) << 5) | (b >> 11));//ILI9341/NT35310/NT35510需要公式转换一下
 }
+
 
 //================================================================================================
 //	实现功能：	设置窗口
@@ -418,7 +426,9 @@ void LCD_Showchar(unsigned int x, unsigned int y,unsigned char c, unsigned int c
 	}
 }
 
-void LCD_ShowString(unsigned int x, unsigned int y,const char *s, unsigned int color, unsigned int b_color)
+
+// write text directly to the display (no transparency)
+void LCD_ShowString(unsigned int x, unsigned int y, const char *s, unsigned int color, unsigned int b_color)
 {
 	while (*s != '\0')
 	{
@@ -428,19 +438,20 @@ void LCD_ShowString(unsigned int x, unsigned int y,const char *s, unsigned int c
 	}
 }
 
+
 /**********************************************************************************************************
 *	函 数 名：Buf_Showchar
-*	功能说明：
+*	功能说明：Draws half a character with no background to the current display buffer strip.
 *	形    参：
 *	返 回 值：
 **********************************************************************************************************/
-void Buf_Showchar(unsigned int x, unsigned int y,unsigned char c, unsigned int color, uint8_t UpOrDn)
+void Buf_Showchar(unsigned int x, unsigned int y, unsigned char c, unsigned int color, uint8_t UpOrDn)
 {
 	unsigned int  s_x, s_y, temp;
 	unsigned int j;
 	c -= 32;
 
-	if (UpOrDn == 0)  //上半部分
+	if (UpOrDn == 0)		//上半部分 / draw the upper half
 	{
 		for (s_y = 0; s_y < 8; s_y++)
 		{
@@ -454,7 +465,7 @@ void Buf_Showchar(unsigned int x, unsigned int y,unsigned char c, unsigned int c
 			}
 		}
 	}
-	else   //下半部分
+	else if	(UpOrDn == 1)	//下半部分 / draw the lower half
 	{
 		for (s_y = 8; s_y < 16; s_y++)
 		{
@@ -468,7 +479,22 @@ void Buf_Showchar(unsigned int x, unsigned int y,unsigned char c, unsigned int c
 			}
 		}
 	}
+	else					// draw lower-case letters only (y tweaks the fit in the 10 line buffer)
+	{
+		for (s_y = 6 - y; s_y < 16 - y; s_y++)
+		{
+			j = c;
+			j = j * 16 + s_y;
+			temp = font16x8[j];
+			for (s_x = 0; s_x < 8; s_x++)
+			{
+				if ((temp & (0x80 >> s_x)) == (0x80 >> s_x))
+					data.DisBuf[(s_y - 6 + y) * 320 + x + s_x] = color;
+			}
+		}
+	}
 }
+
 
 /**********************************************************************************************************
 *	函 数 名：Buf_ShowString
@@ -485,6 +511,7 @@ void Buf_ShowString(unsigned int x, unsigned int y,const char *s, unsigned int c
 		s++;
 	}
 }
+
 
 /**********************************************************************************************************
 *	函 数 名：Buf_ShowNum
@@ -516,6 +543,7 @@ void Buf_ShowNum(unsigned int x, unsigned int y, int num, unsigned int color, ui
 		Buf_Showchar(x, y, num + '0', color, UpOrDn);
 	}
 }
+
 
 /**********************************************************************************************************
 *	函 数 名：Buf_SmallFloatNum
@@ -575,6 +603,8 @@ void Buf_SmallFloatNum(int x, int y, int16_t num, unsigned int color, uint8_t Up
 	Buf_ShowString(x, y, "'C", color, UpOrDn);
 }
 
+
+// fill a rectangular area in the display buffer with selected color index
 void Buf_Fill(uint16_t sx, uint16_t sy, uint16_t ex, uint16_t ey, uint8_t color)
 {
     unsigned int i, j;
@@ -588,6 +618,7 @@ void Buf_Fill(uint16_t sx, uint16_t sy, uint16_t ex, uint16_t ey, uint8_t color)
 	}
 }
 
+
 /**********************************************************************************************************
 *	函 数 名：Disp_BatPower
 *	功能说明：显示电量
@@ -598,30 +629,37 @@ void Disp_BatPower(void)
 {
 	uint16_t i, tmp;
 
-	Buf_Fill( 6, 0,  6, 9, BUF_BLACK);
-	Buf_Fill(24, 0, 24, 9, BUF_BLACK);
-	Buf_Fill( 6, 0, 24, 0, BUF_BLACK);
-	Buf_Fill( 6, 9, 24, 9, BUF_BLACK);
-	Buf_Fill( 3, 3,  3, 6, BUF_BLACK);
-	Buf_Fill( 4, 3,  4, 6, BUF_BLACK);
-	Buf_Fill( 5, 3,  5, 6, BUF_BLACK);
+	Buf_Fill( 6, 1,  6, 9, BUF_BLACK);	// left edge
+	Buf_Fill(24, 1, 24, 9, BUF_BLACK);	// right edge
+	Buf_Fill( 6, 1, 24, 1, BUF_BLACK);	// top edge
+	Buf_Fill( 6, 9, 24, 9, BUF_BLACK);	// bottom edge
+	Buf_Fill( 3, 4,  5, 6, BUF_BLACK);	// button
 
-	if(CRG_STA_READ())  //根据电量来显示竖杠
+	// Measured battery voltages vs. ADCValue[0] * 660:
+	// - 3.660 V = 560, 3.925 V = 600, 4.000 V = 611 → 0.00655 V per step, 0.001055 V per ADC step.
+	// Interesting values:
+	// - 660 = 4095 raw = 4.32 V seems to be the maximum / reference (only on USB power: measured 4.162 V = 659).
+	// - 642 = 3983 raw = 4.20 V is considered as the maximum by the original code.
+	// - 581 = 3602 raw = 3.80 V is considered as the maximum now (Li-ion voltage drops quickly at first, ignore it).
+	// - 535 = 3318 raw = 3.50 V is considered empty battery (Li-ion could go lower, but 3.3 V reg may need a margin).
+	const uint16_t min = 3318;
+	const uint16_t max = 3602;
+	if (CRG_STA_READ())		// 根据电量来显示竖杠 / Draw vertical bars based on battery voltage
 	{
-		Buf_Fill(7, 1, 23, 8, BUF_WHITE);
+		Buf_Fill(7, 2, 23, 8, BUF_BLACK);
 
-		tmp = ((ADCValue[0] * 660) >> 12);
-		if (tmp < 539) tmp = 539;
-		else if (tmp > 642) tmp = 642;
-		tmp = (tmp - 539) * 15 / 103;
+		tmp = ADCValue[0];
+		if (tmp < min) tmp = min;
+		else if (tmp > max) tmp = max;
+		tmp = (tmp - min) * 17 / (max - min);
 
 		for (i = 0; i < tmp; i++)
 		{
-			Buf_Fill(22 - i, 2, 22 - i, 7, BUF_BLACK);
+			Buf_Fill(23 - i, 2, 23 - i, 8, BUF_WHITE);
 		}
 	}
-	else            //正在充电
+	else					// 正在充电 / If battery is charging, draw a full green icon
 	{
-		Buf_Fill(7, 1, 23, 8, BUF_GREEN);
+		Buf_Fill(7, 2, 23, 8, BUF_GREEN);
 	}
 }

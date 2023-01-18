@@ -318,6 +318,4 @@ int I2CReceiveAck(void)
     IIC_SDA_LOW();
     
     return ack;    
-}  
-
-     
+}

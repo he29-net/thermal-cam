@@ -101,6 +101,7 @@ OF SUCH DAMAGE.
 
 /* configuration of the Cortex-M3 processor and core peripherals */
 #define __MPU_PRESENT             0        /*!< GD32F10x do not provide MPU                              */
+#define __FPU_PRESENT             0        /*!< GD32F10x do not provide FPU                              */
 #define __NVIC_PRIO_BITS          4        /*!< GD32F10x uses 4 bits for the priority levels             */
 #define __Vendor_SysTickConfig    0        /*!< set to 1 if different sysTick config is used             */
 /* define interrupt number */
@@ -309,6 +310,7 @@ typedef enum IRQn
 #include "core_cm3.h"
 #include "system_gd32f10x.h"
 #include <stdint.h>
+#include <stdbool.h>
 
 /* enum definitions */
 typedef enum {DISABLE = 0, ENABLE = !DISABLE} EventStatus, ControlStatus;
