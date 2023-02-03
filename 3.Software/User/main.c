@@ -71,7 +71,12 @@ enum {UI_START, UI_FPS = UI_START, UI_USB, UI_END} ui_mode = UI_FPS;
 void update_data() {
 	MLX90640_GetFrameData(MLX90640_ADDR, data.mlx90640_Zoom10);
 	Ta = MLX90640_GetTa(data.mlx90640_Zoom10, &mlx90640);	// 读取MLX90640 外壳温度 / Get ambient temperature
+#ifdef DRAWING_TEST
+	for (uint16_t i = 0; i < 768/2; i++) data2.mlx90640To[i] = i * 10;
+	for (uint16_t i = 768/2; i < 768; i++) data2.mlx90640To[i] = 7680 - i * 10;
+#else
 	MLX90640_CalculateTo(data.mlx90640_Zoom10, &mlx90640, emissivity , Ta - TA_SHIFT, data2.mlx90640To);
+#endif
 }
 
 int main(void) {

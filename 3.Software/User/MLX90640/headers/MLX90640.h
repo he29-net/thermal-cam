@@ -31,7 +31,7 @@ void Disp_TempNew(void);
 void Buf_Showchar(unsigned int x, unsigned int y,unsigned char c, unsigned int color,uint8_t UpOrDn);
 void Buf_ShowString(unsigned int x, unsigned int y,const char *s, unsigned int color,uint8_t UpOrDn);
 void Buf_ShowNum(unsigned int x, unsigned int y,int num, unsigned int color,uint8_t UpOrDn);
-void Buf_SmallFloatNum(int x,int y,int16_t num,unsigned int color,uint8_t UpOrDn);
+void Buf_SmallFloatNum(int x,int y,int16_t num,unsigned int color,uint8_t UpOrDn, bool alignRight);
 void Buf_Fill(uint16_t sx,uint16_t sy,uint16_t ex,uint16_t ey,uint8_t color);
 void Disp_BatPower(void);
 void Disp_test(void);

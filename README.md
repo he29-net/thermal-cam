@@ -11,6 +11,9 @@ My goal is simply to make the firmware a bit more polished, flexible and up to d
 	- buttons now control a simple menu (left button selects action, right button activates it / cycles values)
 	- runtime selectable FPS (default 4 FPS is often quite noisy, but 1 FPS is often too slow..)
 	- todo: runtime selectable emissivity
+	- todo: runtime selectable color scales
+ - color mapping:
+	- fixed glitches and improved accuracy at high temperatures (tested up to 600 °C)
  - battery indicator:
 	- moved to the left to make space for action selector
 	- different colors / drawing style to make it clearer which part means full and which empty
@@ -21,15 +24,11 @@ My goal is simply to make the firmware a bit more polished, flexible and up to d
 
 ## Known issues
  - BPM saving is broken (files contain only blue color or are otherwise incomplete)
- - drawing code:
-	- glitches at high temperatures not yet fixed
-	- 8 FPS display rate seems glitchy as well (disabled by default; not enough performance?)
-	- maximum temperature may overlap with menu value
+ - 8 FPS display rate seems glitchy (disabled by default; not enough performance?)
 
 ## Long term plans
  - support a newer compiler (or better, a FOSS toolchain, to get rid of the 32k limitation)
  - translate, add, and improve comments
- - different color mappings?
 
 ## How to build and use
  - get and install MDK-ARM 5.38a or similar version (https://www.keil.com/demo/eval/arm.htm)

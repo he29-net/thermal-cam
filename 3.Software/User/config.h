@@ -8,5 +8,6 @@
 // Debug features
 //#define PROFILE			// measure and display performance of the processing code (~150 B)
 //#define DISPLAY_TEST		// display test pattern and stop
+//#define DRAWING_TEST		// replace sensor output with a fixed test pattern
 
 #endif

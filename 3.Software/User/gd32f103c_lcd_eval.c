@@ -551,7 +551,7 @@ void Buf_ShowNum(unsigned int x, unsigned int y, int num, unsigned int color, ui
 *	形    参：
 *	返 回 值：
 **********************************************************************************************************/
-void Buf_SmallFloatNum(int x, int y, int16_t num, unsigned int color, uint8_t UpOrDn)
+void Buf_SmallFloatNum(int x, int y, int16_t num, unsigned int color, uint8_t UpOrDn, bool alignRight)
 {
 	if (num < 0)
 	{
@@ -574,6 +574,7 @@ void Buf_SmallFloatNum(int x, int y, int16_t num, unsigned int color, uint8_t Up
 	}
     else if (num >= 100)
 	{
+		if (alignRight) x += 8;
 		Buf_Showchar(x, y, num / 100 + '0', color, UpOrDn);
 		x += 8;
 		Buf_Showchar(x, y, (num / 10) % 10 + '0', color, UpOrDn);
@@ -584,6 +585,7 @@ void Buf_SmallFloatNum(int x, int y, int16_t num, unsigned int color, uint8_t Up
 	}
 	else if (num >= 10)
 	{
+		if (alignRight) x += 16;
 		Buf_Showchar(x, y, num / 10 + '0', color, UpOrDn);
 		x += 8;
 		Buf_Showchar(x, y, '.', color, UpOrDn);
@@ -592,6 +594,7 @@ void Buf_SmallFloatNum(int x, int y, int16_t num, unsigned int color, uint8_t Up
 	}
 	else
 	{
+		if (alignRight) x += 24;
 		Buf_Showchar(x, y, 0 + '0', color, UpOrDn);
 		x += 8;
 		Buf_Showchar(x, y, '.', color, UpOrDn);
@@ -627,13 +630,13 @@ void Buf_Fill(uint16_t sx, uint16_t sy, uint16_t ex, uint16_t ey, uint8_t color)
 **********************************************************************************************************/
 void Disp_BatPower(void)
 {
-	uint16_t i, tmp;
+	uint16_t tmp;
 
 	Buf_Fill( 6, 1,  6, 9, BUF_BLACK);	// left edge
 	Buf_Fill(24, 1, 24, 9, BUF_BLACK);	// right edge
 	Buf_Fill( 6, 1, 24, 1, BUF_BLACK);	// top edge
 	Buf_Fill( 6, 9, 24, 9, BUF_BLACK);	// bottom edge
-	Buf_Fill( 3, 4,  5, 6, BUF_BLACK);	// button
+	Buf_Fill( 4, 4,  5, 6, BUF_BLACK);	// button
 
 	// Measured battery voltages vs. ADCValue[0] * 660:
 	// - 3.660 V = 560, 3.925 V = 600, 4.000 V = 611 → 0.00655 V per step, 0.001055 V per ADC step.
@@ -641,22 +644,18 @@ void Disp_BatPower(void)
 	// - 660 = 4095 raw = 4.32 V seems to be the maximum / reference (only on USB power: measured 4.162 V = 659).
 	// - 642 = 3983 raw = 4.20 V is considered as the maximum by the original code.
 	// - 581 = 3602 raw = 3.80 V is considered as the maximum now (Li-ion voltage drops quickly at first, ignore it).
-	// - 535 = 3318 raw = 3.50 V is considered empty battery (Li-ion could go lower, but 3.3 V reg may need a margin).
-	const uint16_t min = 3318;
+	// - 542 = 3365 raw = 3.55 V is considered empty battery (Li-ion could go lower, but 3.3 V reg may need a margin).
+	const uint16_t min = 3365;
 	const uint16_t max = 3602;
 	if (CRG_STA_READ())		// 根据电量来显示竖杠 / Draw vertical bars based on battery voltage
 	{
-		Buf_Fill(7, 2, 23, 8, BUF_BLACK);
-
 		tmp = ADCValue[0];
 		if (tmp < min) tmp = min;
 		else if (tmp > max) tmp = max;
 		tmp = (tmp - min) * 17 / (max - min);
-
-		for (i = 0; i < tmp; i++)
-		{
-			Buf_Fill(23 - i, 2, 23 - i, 8, BUF_WHITE);
-		}
+		if (tmp) Buf_Fill(24 - tmp, 2, 23, 8, BUF_WHITE);
+		tmp = 17 - tmp;
+		if (tmp) Buf_Fill(7, 2, 6 + tmp, 8, BUF_BLACK);
 	}
 	else					// 正在充电 / If battery is charging, draw a full green icon
 	{
