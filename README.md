@@ -6,26 +6,32 @@ Board schematics were made in Altium designer and can be viewed in the free web 
 
 My goal is simply to make the firmware a bit more polished, flexible and up to date with recently available tools.
 
-## Changes so far
+## Changes
  - new features:
-	- buttons now control a simple menu (left button selects action, right button activates it / cycles values)
-	- runtime selectable FPS (default 4 FPS is often quite noisy, but 1 FPS is often too slow..)
+	- buttons now control a simple menu
+		- left button selects action, right button activates it / cycles values
+	- runtime selectable refresh rate
+		- default 4 Hz for faster updates, 1 Hz for lower noise, 2 Hz as a compromise
 	- runtime selectable emissivity
-	- runtime selectable color scales
- - color mapping:
+		- 12 presets for common types of materials
+	- runtime selectable color scales (black-body, blue-red-white, rainbow, high-contrast)
+	- runtime selectable temperature ranges (automatic by default + 5 fixed range presets)
+ - fixes:
 	- fixed glitches and improved accuracy at high temperatures (tested up to 600 °C)
- - battery indicator:
-	- moved to the left to make space for action selector
-	- different colors / drawing style to make it clearer which part means full and which empty
+ - other changes:
+	- battery indicator reworked and moved to the left to make space for action selector
 	- voltage considered "full" changed from 4.2 V to 3.8 V (Li-ion drops off fast, despite still being almost full)
- - code rework (WIP):
+ - code rework:
 	- sources cleaned up a bit and converted to UTF-8
 	- reduced code size to fit all features under the linker limit of Keil v5 MDK non-commercial version
+	- new drawing function (more maintainable and flexible, but slower)
 
 ## Known issues
  - BPM saving is broken (files contain only blue color or are otherwise incomplete)
  - 8 FPS display rate seems glitchy (disabled by default; not enough performance?)
- - emissivity 1.00 and 0.04 is displayed incorrectly
+ - emissivity values 1.00 and 0.04 are displayed incorrectly
+ - center reading at fixed ranges is limited to min / max even though it does not have to be
+ - stuck at black screen after activating USB mode when USB is not connected
 
 ## Long term plans
  - support a newer compiler (or better, a FOSS toolchain, to get rid of the 32k limitation)
