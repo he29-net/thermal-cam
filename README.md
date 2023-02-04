@@ -10,8 +10,8 @@ My goal is simply to make the firmware a bit more polished, flexible and up to d
  - new features:
 	- buttons now control a simple menu (left button selects action, right button activates it / cycles values)
 	- runtime selectable FPS (default 4 FPS is often quite noisy, but 1 FPS is often too slow..)
-	- todo: runtime selectable emissivity
-	- todo: runtime selectable color scales
+	- runtime selectable emissivity
+	- runtime selectable color scales
  - color mapping:
 	- fixed glitches and improved accuracy at high temperatures (tested up to 600 °C)
  - battery indicator:
@@ -25,6 +25,7 @@ My goal is simply to make the firmware a bit more polished, flexible and up to d
 ## Known issues
  - BPM saving is broken (files contain only blue color or are otherwise incomplete)
  - 8 FPS display rate seems glitchy (disabled by default; not enough performance?)
+ - emissivity 1.00 and 0.04 is displayed incorrectly
 
 ## Long term plans
  - support a newer compiler (or better, a FOSS toolchain, to get rid of the 32k limitation)

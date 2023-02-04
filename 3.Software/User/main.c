@@ -41,10 +41,6 @@
 UnionData data;
 UnionData2 data2;
 
-const char *menu_text = "    ";
-uint8_t menu_tweak = 0;
-const char *menu_value = "    ";
-
 float Ta;
 float emissivity = 0.95;
 
@@ -62,11 +58,34 @@ usbd_core_handle_struct  usb_device_dev =
 	.class_data_handler = msc_data_handler
 };
 
+// Define available UI modes
 #ifdef BMP_SAVE
-enum {UI_START, UI_SNAPSHOT = UI_START, UI_FPS, UI_USB, UI_END} ui_mode = UI_SNAPSHOT;
+enum {UI_START, UI_SNAPSHOT = UI_START, UI_FPS, UI_SCALE, UI_RANGE, UI_EMIS, UI_USB, UI_END} ui_mode = UI_SNAPSHOT;
 #else
-enum {UI_START, UI_FPS = UI_START, UI_USB, UI_END} ui_mode = UI_FPS;
+enum {UI_START, UI_FPS = UI_START, UI_SCALE, UI_RANGE, UI_EMIS, UI_USB, UI_END, UI_SNAPSHOT} ui_mode = UI_FPS;
 #endif
+
+// Load color maps in RGB565 format. 0..253 = temperature → color map, 254 = GUI FG, 255 = GUI BG
+// 色条颜色，共256色
+#include "scales/blackbody.c"
+#include "scales/contrast.c"
+#include "scales/rainbow.c"
+#include "scales/skyline.c"
+
+// Define the cycle of preset values selectable in each mode
+enum {CM_START, CM_SKYLINE = UI_START, CM_BLACKBODY, CM_CONTRAST, CM_RAINBOW, CM_END} colormap = CM_SKYLINE;
+enum {RAN_START, RAN_AUTO = RAN_START, RAN_COLD, RAN_ROOM, RAN_WATER, RAN_BOIL, RAN_MAX, RAN_END} range = RAN_AUTO;
+enum {EM_START, EM_WATER = EM_START, EM_SKIN, EM_MAX, EM_METAL, EM_ALOX, EM_40, EM_60, EM_SNOW, EM_PTFE, EM_PAINT,
+	EM_LIME, EM_PLANT, EM_END} emindex = EM_WATER;
+
+// Configured values for external use
+const char *menu_text = "    ";
+uint8_t menu_tweak = 0;
+const char *menu_value = "    ";
+
+uint16_t *camColors = (uint16_t*)&(skyline.pixel_data[0]);	// color mapping lookup table
+int16_t range_low = -100;									// low and high limit for a fixed range
+int16_t range_high = -100;									// (anything under -40 means automatic range)
 
 void update_data() {
 	MLX90640_GetFrameData(MLX90640_ADDR, data.mlx90640_Zoom10);
@@ -78,6 +97,7 @@ void update_data() {
 	MLX90640_CalculateTo(data.mlx90640_Zoom10, &mlx90640, emissivity , Ta - TA_SHIFT, data2.mlx90640To);
 #endif
 }
+
 
 int main(void) {
 	uint16_t statusRegister;
@@ -158,6 +178,53 @@ int main(void) {
 					}
 					break;
 
+				case UI_SCALE:		// cycle through available color maps
+					menu_text = " map";
+					menu_tweak = 0;
+					switch (colormap) {
+						case CM_BLACKBODY:	menu_value = "fire"; break;
+						case CM_RAINBOW:	menu_value = "rbow"; break;
+						case CM_CONTRAST:	menu_value = "trip"; break;
+						case CM_SKYLINE:	menu_value = "glow"; break;
+						default: menu_value= "fail"; break;
+					}
+					break;
+
+				case UI_RANGE:		// cycle through available temperature ranges
+					menu_text = "span";
+					menu_tweak = 0;
+					switch (range) {
+						case RAN_AUTO:	menu_value = "auto"; break;
+						case RAN_COLD:	menu_value = "cold"; break;
+						case RAN_ROOM:	menu_value = "room"; break;
+						case RAN_WATER:	menu_value = " H2O"; break;
+						case RAN_BOIL:	menu_value = "boil"; break;
+						case RAN_MAX:	menu_value = " max"; break;
+						default: menu_value= "fail"; break;
+					}
+					break;
+
+				case UI_EMIS:		// cycle through available emissivities
+					menu_text = "emis";
+					menu_tweak = 2;
+					switch (emindex) {
+						// common values form https://en.wikipedia.org/wiki/Emissivity#Emissivities_of_common_surfaces
+						case EM_METAL:	menu_value = "metl"; break;
+						case EM_ALOX:	menu_value = "Alox"; break;
+						case EM_40:		menu_value = "em40"; break;
+						case EM_60:		menu_value = "em60"; break;
+						case EM_SNOW:	menu_value = "snow"; break;
+						case EM_PTFE:	menu_value = "PTFE"; break;
+						case EM_PAINT:	menu_value = "pnt."; break;
+						case EM_LIME:	menu_value = "lime"; break;
+						case EM_PLANT:	menu_value = "vege"; break;
+						case EM_WATER:	menu_value = " H2O"; break;
+						case EM_SKIN:	menu_value = "skin"; break;
+						case EM_MAX:	menu_value = " max"; break;
+						default: menu_value= "fail"; break;
+					}
+					break;
+
 				case UI_USB:		// break out of image handling loop and initialize USB
 					menu_text = " usb";
 					menu_tweak = 2;
@@ -176,8 +243,6 @@ int main(void) {
 
 			ui_mode++;
 			if (ui_mode >= UI_END) ui_mode = UI_START;
-
-
 		}
 		// Second button = trigger the selected function
 		else if (ADCValue[1] < 2350 && ADCValue[1] > 1750)
@@ -199,6 +264,53 @@ int main(void) {
 					refresh_rate++;
 					if (refresh_rate > MaximumRefreshRate) refresh_rate = MinimumRefreshRate;
 					MLX90640_SetRefreshRate(MLX90640_ADDR, refresh_rate);
+					break;
+
+				case UI_SCALE:		// cycle through available color maps
+					colormap++;
+					if (colormap >= CM_END) colormap = CM_START;
+					switch (colormap) {
+						case CM_BLACKBODY:	camColors = (uint16_t*)&(blackbody.pixel_data[0]); break;
+						case CM_RAINBOW:	camColors = (uint16_t*)&(rainbow.pixel_data[0]); break;
+						case CM_CONTRAST:	camColors = (uint16_t*)&(contrast.pixel_data[0]); break;
+						case CM_SKYLINE:	camColors = (uint16_t*)&(skyline.pixel_data[0]); break;
+						default: 			camColors = (uint16_t*)&(skyline.pixel_data[0]); break;
+					}
+					break;
+
+				case UI_RANGE:		// cycle through available temperature ranges
+					range++;
+					if (range >= RAN_END) range = RAN_START;
+					switch (range) {
+						case RAN_AUTO:	range_low = -100; range_high = -100; break;
+						case RAN_COLD:	range_low = -40; range_high = 10; break;
+						case RAN_ROOM:	range_low = 10; range_high = 40; break;
+						case RAN_WATER:	range_low = 0; range_high = 100; break;
+						case RAN_BOIL:	range_low = 70; range_high = 110; break;
+						case RAN_MAX:	range_low = -40; range_high = 300; break;
+						default: 		range_low = -100; range_high = -100; break;
+					}
+					break;
+
+				case UI_EMIS:		// cycle through available emissivities
+					emindex++;
+					if (emindex >= EM_END) emindex = EM_START;
+					switch (emindex) {
+						// common values form https://en.wikipedia.org/wiki/Emissivity#Emissivities_of_common_surfaces
+						case EM_METAL:	emissivity = 0.04; break;
+						case EM_ALOX:	emissivity = 0.20; break;
+						case EM_40:		emissivity = 0.40; break;
+						case EM_60:		emissivity = 0.60; break;
+						case EM_SNOW:	emissivity = 0.80; break;
+						case EM_PTFE:	emissivity = 0.85; break;
+						case EM_PAINT:	emissivity = 0.90; break;
+						case EM_LIME:	emissivity = 0.92; break;
+						case EM_PLANT:	emissivity = 0.94; break;
+						case EM_WATER:	emissivity = 0.96; break;
+						case EM_SKIN:	emissivity = 0.98; break;
+						case EM_MAX:	emissivity = 1.00; break;
+						default: emissivity = 0.95; break;
+					}
 					break;
 
 				case UI_USB:		// break out of image handling loop and initialize USB

@@ -42,4 +42,8 @@ extern const char *menu_text;
 extern uint8_t menu_tweak;
 extern const char *menu_value;
 
+extern uint16_t *camColors;
+extern int16_t range_low;
+extern int16_t range_high;
+
 #endif

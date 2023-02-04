@@ -2,7 +2,7 @@
 #define __CONFIG_H__
 
 // Enable or disable optional features depending on desired binary size (base size ~25.7 kB)
-#define BMP_SAVE			// enable BPM image saving functionality (~4 kB)
+//#define BMP_SAVE			// enable BPM image saving functionality (~4 kB) (currently broken)
 #define CLEANUP				// flush garbage frames out of the sensor after startup and BPM saving (~100 B)
 
 // Debug features
