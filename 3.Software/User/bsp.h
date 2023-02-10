@@ -18,6 +18,7 @@
 #include "diskio.h"
 #include "ff.h"
 #include "bmp.h"
+#include "config.h"
 
 typedef union{
 	uint16_t mlx90640_Zoom10[834];  
@@ -45,5 +46,9 @@ extern const char *menu_value;
 extern uint16_t *camColors;
 extern int16_t range_low;
 extern int16_t range_high;
+
+#ifdef PROFILE
+extern int16_t sensor_diff;
+#endif
 
 #endif

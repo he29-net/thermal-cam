@@ -1,0 +1,41 @@
+---
+# Language
+Language:        Cpp
+Standard:        Cpp11
+
+# Indentation
+TabWidth:        4
+UseTab:          Always
+IndentWidth:     4
+ColumnLimit:     120
+
+# Indentation detail
+AlignAfterOpenBracket: DontAlign
+ContinuationIndentWidth: 4
+BinPackParameters: true
+BinPackArguments: true
+AlignOperands: false
+
+# Alignment
+AlignEscapedNewlines: DontAlign
+AllowShortBlocksOnASingleLine: Always
+AllowShortIfStatementsOnASingleLine: Always
+AllowShortCaseLabelsOnASingleLine: true
+AllowShortFunctionsOnASingleLine: InlineOnly
+
+# Spaces
+SpaceBeforeAssignmentOperators: true
+SpaceBeforeParens: ControlStatements
+SpacesInAngles:  false
+SpacesInCStyleCastParentheses: false
+SpacesInParentheses: false
+
+# Brace wrapping
+BreakBeforeBraces: Linux
+
+# Pointers
+# Use pointer close to type: `const char* const* function()`
+PointerAlignment: Left
+
+...
+

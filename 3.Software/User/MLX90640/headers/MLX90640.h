@@ -15,9 +15,9 @@
 #define  FPS64HZ  0x07
 
 #define  MLX90640_ADDR 		0x33
-#define  DefaultRefreshRate	FPS4HZ		// 推荐用4Hz，干扰少 / 4 Hz is a good compromise between speed and noise
+#define  DefaultRefreshRate	FPS8HZ		// 推荐用4Hz，干扰少 / 4 Hz is a good compromise between speed and noise
 #define  MinimumRefreshRate	FPS1HZ		// Minimum refresh rate is limited by user preference
-#define  MaximumRefreshRate	FPS4HZ		// Maximum refresh rate is limited by sensor and drawing code performance
+#define  MaximumRefreshRate	FPS16HZ		// Maximum refresh rate is limited by conversion and drawing code performance
 #define  TA_SHIFT 			8			// Default shift for MLX90640 in open air
 
 extern float Ta;

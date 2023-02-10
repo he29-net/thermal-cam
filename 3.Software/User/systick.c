@@ -39,8 +39,6 @@ OF SUCH DAMAGE.
 #include "gd32f10x.h"
 #include "systick.h"
 
-//volatile static uint32_t delay;
-
 /*!
     \brief      configure systick
     \param[in]  none
@@ -49,49 +47,13 @@ OF SUCH DAMAGE.
 */
 void systick_config(void)
 {
-    /* setup systick timer for 1000Hz interrupts */
-//    if (SysTick_Config(SystemCoreClock / 1000U)){
-        /* capture error */
-//        while (1){
- //       }
-  //  }
-    /* configure the systick handler priority */
-//    NVIC_SetPriority(SysTick_IRQn, 0x00U);
-
     /* systick clock source is from HCLK/8 */
     systick_clksource_set(SYSTICK_CLKSOURCE_HCLK_DIV8);
 
     /* reload the count value */
-    SysTick->LOAD = 1000*1800U;
+    SysTick->LOAD = 0xffffff;
     /* clear the current count value */
     SysTick->VAL = 0x0000U;
     /* enable the systick timer */
     SysTick->CTRL = SysTick_CTRL_ENABLE_Msk;
 }
-
-/*!
-    \brief      delay a time in milliseconds
-    \param[in]  count: count in milliseconds
-    \param[out] none
-    \retval     none
-*/
-//void delay_1ms(uint32_t count)
-//{
-//    delay = count;
-
-//    while(0U != delay){
-//    }
-//}
-
-/*!
-    \brief      delay decrement
-    \param[in]  none
-    \param[out] none
-    \retval     none
-*/
-//void delay_decrement(void)
-//{
-//    if (0U != delay){
-//        delay--;
-//    }
-//}

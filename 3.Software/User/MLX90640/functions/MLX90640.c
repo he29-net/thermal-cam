@@ -56,7 +56,7 @@ void Disp_TempPic(void)
 	uint8_t  sx, sy;
 
 #ifdef PROFILE
-	SysTick->VAL = 0xffffff;
+	SysTick->VAL = 0;
 #endif
 
 	max = 0; min = 3400;	//测温范围是-40~300℃,温度值放大了10倍：-400~3000，并向上平移400：0~3400
@@ -455,10 +455,9 @@ void Disp_TempPic(void)
 	Buf_SmallFloatNum(264, 2, Ta * 10, BUF_BLACK, 0, false);						//外壳温度
 
 #ifdef PROFILE
-	// this old code apparently takes around 24 ms (without the last line)
-	diff = (0xFFFFFF - SysTick->VAL) / 11888;	// counting down
-	Buf_ShowNum(70, 2, diff, BUF_BLACK, 0);
-	Buf_ShowString(100, 2, "ms", BUF_BLACK, 0);
+	Buf_ShowString(60, 2, "draw:", BUF_BLACK, 0);
+	Buf_ShowNum(100, 2, diff, BUF_BLACK, 0);
+	Buf_ShowString(120, 2, "ms", BUF_BLACK, 0);
 #endif
 
 	for (x = 0; x < adr; x++)
@@ -514,8 +513,9 @@ void Disp_TempPic(void)
 	Buf_SmallFloatNum(264, 0, Ta * 10, BUF_BLACK, 1, false);						//外壳温度
 
 #ifdef PROFILE
-	Buf_ShowNum(70, 0, diff, BUF_BLACK, 1);
-	Buf_ShowString(100, 0, "ms", BUF_BLACK, 1);
+	Buf_ShowString(60, 0, "draw:", BUF_BLACK, 1);
+	Buf_ShowNum(100, 0, diff, BUF_BLACK, 1);
+	Buf_ShowString(120, 0, "ms", BUF_BLACK, 1);
 #endif
 
 	for (x = 0; x < adr; x++)
@@ -538,14 +538,17 @@ void Disp_TempPic(void)
 		LCD_Fill(x, y - 7, x, y + 7, GREEN);	  //y 最小值中心+字标
 	}
 
+#ifdef PROFILE
+	diff = (0xFFFFFF - SysTick->VAL) / 11888;	// counting down
+#endif
 }
 
 
-// Draw specified lines of the thermal image to the display buffer or directly to the display
+// Draw specified lines of the thermal image to the display buffer or directly to the display.
+// Performs bilinear interpolation from the 32x24 to 320x240 pixels and maps temperature values to colors.
 void draw_thermal(uint8_t start, uint8_t end, bool direct) {
 	uint16_t dst_x, dst_y;
 	uint16_t src_x, src_y;
-	uint8_t  src_x_int, src_y_int;
 	uint16_t src_color, weight_x[2], weight_y[2];
 	uint16_t dst_color, dst_addr;
 
@@ -562,25 +565,18 @@ void draw_thermal(uint8_t start, uint8_t end, bool direct) {
 	src_y = start * SRC_STEP_Y;	// exact, fixed-point representation of target y coordinate in the source
 
 	for (dst_y = start; dst_y <= end; dst_y++) {
-		src_y_int = src_y >> FIXED_POINT;				// SrcY中的整数 / integer part of the y source coordinate
-
 		weight_y[1] = src_y & ((1 << FIXED_POINT) - 1);	// v
 		weight_y[0] = (1 << FIXED_POINT) - weight_y[1];	// 1 - v
-
-		src_y += SRC_STEP_Y;
 
 		src_x = 0;
 		for (dst_x = 0; dst_x < DST_MAX_X; dst_x++)
 		{
-			src_x_int = src_x >> FIXED_POINT;				// SrcX中的整数 / integer part of the x source coordinate
-
 			weight_x[1] = src_x & ((1 << FIXED_POINT) - 1);	// u
 			weight_x[0] = (1 << FIXED_POINT) - weight_x[1];	// 1 - u
 
-			src_x += SRC_STEP_X;
-
-			// Perform bilinear interpolation
-			src_color = src_y_int * 32 + 31 - src_x_int;
+			// Find a source "anchor pixel" by discarding decimal points of precise coordinates
+			src_color = (src_y >> FIXED_POINT) * 32 + 31 - (src_x >> FIXED_POINT);
+			// Perform bilinear interpolation between the anchor and 3 other pixels next ot it
 			dst_color = (
 				data2.mlx90640To[src_color	   ] * weight_x[0] * weight_y[0] +
 				data2.mlx90640To[src_color + 32] * weight_x[0] * weight_y[1] +
@@ -599,13 +595,23 @@ void draw_thermal(uint8_t start, uint8_t end, bool direct) {
 			// Drawing is done at half resolution, each pixel and line is duplicated
 			data.DisBuf[dst_addr++] = dst_color;
 			data.DisBuf[dst_addr++] = dst_color;
+
+			src_x += SRC_STEP_X;
 		}
 
 		if (direct) {
 			// Skip the buffer and write directly to the LCD
 			for (uint8_t i = 0; i < 2; i++) {
-				for (dst_x = 0; dst_x < 2 * DST_MAX_X; dst_x++) {
-					ILI9341_Write_Data1(camColors[data.DisBuf[dst_x]]);
+			/*	for (dst_x = 0; dst_x < 2 * DST_MAX_X; dst_x++) {
+					//ILI9341_Write_Data1(camColors[data.DisBuf[dst_x]]);
+				}*/
+				// Load 4 values at the same time (in total about 2 ms faster).
+				for (dst_x = 0; dst_x < 2 * DST_MAX_X; dst_x = dst_x + 4) {
+					const uint32_t temp = *((uint32_t*)(&data.DisBuf[dst_x]));
+					ILI9341_Write_Data1(camColors[(temp & 0xff)]);
+					ILI9341_Write_Data1(camColors[(temp >> 8) & 0xff]);
+					ILI9341_Write_Data1(camColors[(temp >> 16) & 0xff]);
+					ILI9341_Write_Data1(camColors[(temp >> 24)]);
 				}
 			}
 			dst_addr = 0;	// Reset the buffer so it does not overflow (direct writes tend to be long)
@@ -615,13 +621,25 @@ void draw_thermal(uint8_t start, uint8_t end, bool direct) {
 				data.DisBuf[dst_addr++] = data.DisBuf[dst_addr - 2 * DST_MAX_X];
 			}
 		}
+
+		src_y += SRC_STEP_Y;
 	}
 }
 
 
 void write_buffer(uint8_t lines) {
-	for (uint16_t x = 0; x < lines * 320; x++) {
+	// 7600 cycles (0.64 ms) per 10 lines
+/*	for (uint16_t x = 0; x < lines * 320; x++) {
 		ILI9341_Write_Data1(camColors[data.DisBuf[x]]);
+	}
+*/
+	// 6900 cycles (0.58 ms) per 10 lines
+	for (uint16_t x = 0; x < lines * 320; x = x + 4) {
+		const uint32_t temp = *((uint32_t*)(&data.DisBuf[x]));
+		ILI9341_Write_Data1(camColors[(temp & 0xff)]);
+		ILI9341_Write_Data1(camColors[(temp >> 8) & 0xff]);
+		ILI9341_Write_Data1(camColors[(temp >> 16) & 0xff]);
+		ILI9341_Write_Data1(camColors[(temp >> 24)]);
 	}
 }
 
@@ -634,7 +652,7 @@ void Disp_TempNew(void)
 	uint16_t Pos_max, Pos_min;
 
 #ifdef PROFILE
-	SysTick->VAL = 0xffffff;
+	SysTick->VAL = 0;
 #endif
 
 	// The datasheet states measurement range is -40 to 300 °C; sensor returns 10 * (x + 40), i.e. 0 to 3400.
@@ -669,7 +687,13 @@ void Disp_TempNew(void)
 	ILI9341_DC_SET;
 	ILI9341_CS_CLR;
 
+	// Start drawing.
 	// There is no space for a frame buffer in the ARM, so everything is done in thin 10 pixel strips that fit.
+	// Most of the time is taken by draw_thermal() and write_buffer() calls.
+	// Indirect draw of 10 lines takes about 0.9 ms, the subsequent buffer dump takes around 0.64 ms (total 1.54 ms).
+	// The direct mode is a bit more efficient and needs only 1.32 ms per 10 lines (about 15700 cycles).
+	// In total, there are 2 direct draws of 85 lines = 22.5 ms and 6 indirect draws of 10 lines = 9.25 ms.
+	// Battery drawing takes around 230 cycles, color scale around 0.15 ms, one string ~0.08 ms (both halves).
 
 	// Top GUI
 	// 0..9: Battery icon, color scale, menu text.
@@ -724,8 +748,12 @@ void Disp_TempNew(void)
 	Buf_ShowString(4, 2, "e=0.", BUF_BLACK, 0);
 	Buf_ShowNum(36, 2, emissivity * 100, BUF_BLACK, 0);						//辐射系数
 #ifdef PROFILE
-	Buf_ShowNum(70, 2, diff, BUF_BLACK, 0);
-	Buf_ShowString(100, 2, "ms", BUF_BLACK, 0);
+	Buf_ShowString(60, 2, "draw:", BUF_BLACK, 0);
+	Buf_ShowNum(100, 2, diff, BUF_BLACK, 0);
+	Buf_ShowString(120, 2, "ms", BUF_BLACK, 0);
+	Buf_ShowString(190, 2, "s:", BUF_BLACK, 0);
+	Buf_ShowNum(202, 2, sensor_diff, BUF_BLACK, 0);
+	Buf_ShowString(225, 2, "ms", BUF_BLACK, 0);
 #endif
 //	Buf_SmallFloatNum(140, 2, center - 400, BUF_BLACK, 0, false);					//中心温度
 	Buf_SmallFloatNum(140, 2, data2.mlx90640To[368] - 400, BUF_BLACK, 0, false);	//中心温度	/ center temperature
@@ -738,8 +766,12 @@ void Disp_TempNew(void)
 	Buf_ShowString(4, 0, "e=0.", BUF_BLACK, 1);
 	Buf_ShowNum(36, 0, emissivity * 100, BUF_BLACK, 1);						//辐射系数
 #ifdef PROFILE
-	Buf_ShowNum(70, 0, diff, BUF_BLACK, 1);
-	Buf_ShowString(100, 0, "ms", BUF_BLACK, 1);
+	Buf_ShowString(60, 0, "draw:", BUF_BLACK, 1);
+	Buf_ShowNum(100, 0, diff, BUF_BLACK, 1);
+	Buf_ShowString(120, 0, "ms", BUF_BLACK, 1);
+	Buf_ShowString(190, 0, "s:", BUF_BLACK, 1);
+	Buf_ShowNum(202, 0, sensor_diff, BUF_BLACK, 1);
+	Buf_ShowString(225, 0, "ms", BUF_BLACK, 1);
 #endif
 //	Buf_SmallFloatNum(140, 0, center - 400, BUF_BLACK, 1, false);					//中心温度
 	Buf_SmallFloatNum(140, 0, data2.mlx90640To[368] - 400, BUF_BLACK, 1, false);	//中心温度
@@ -749,7 +781,7 @@ void Disp_TempNew(void)
 
 
 	// Final overlay: min / max coordinates (direct draw: they move around so blinking is not noticeable)
-	// Only draw in auto mode (when max = emax, min = emin).
+	// Only draw in auto mode (when max = emax, min = emin). Very cheap (~180 cycles).
 	if (max == emax && Pos_max > 31)
 	{
 		x = Pos_x[Pos_max % 32] * 2;
@@ -765,11 +797,9 @@ void Disp_TempNew(void)
 		LCD_Fill(x, y - 7, x, y + 7, GREEN);	  //y 最小值中心+字标
 	}
 
-
 #ifdef PROFILE
-	diff = (0xFFFFFF - SysTick->VAL) / 11888;	// counting down
+	diff = (0xFFFFFF - SysTick->VAL) / 11888;
 #endif
-
 }
 
 

@@ -9,7 +9,7 @@
 	- Program Size: Code=24304 RO-data=2736 RW-data=432 ZI-data=20048  
 		- SRAM 20480 B = RW-data=432 + ZI-data=20048
 		- IRAM1 range in compiler settings seems to be set correctly to size 0x5000 (20k)
-	- Main RAM consumers:
+	- Main RAM consumers (not up to date):
 		- Stack size: 		2048 B (default 1024 B is not sufficient, observed peak usage was around 1850 B)
 		- Sensor output:	1668 B (2*834, raw dump from the sensor, including calibration data etc.)
 		- Temperature out:	1536 B (2*768, computed temperature readings from the sensor)
@@ -27,13 +27,19 @@
 
  Todo:
 	- BPM saving is currently broken (why? how? Only blue color seems to be saved...)
-	- if maximum temperature goes over 99.9 °C, the "C" overlaps with menu_value
 	- no way out of USB mode in case USB isn't connected (needs hard reset instead)
-	- glitches at high temperatures, glitchy min/max and scaling in general (see Disp_TempNew comment)
+	- find a way to save 10 more ms to allow 16 Hz refresh rate
 */
 
 #include "bsp.h"
 #include "config.h"
+
+// Load color maps in RGB565 format. 0..253 = temperature → color map, 254 = GUI FG, 255 = GUI BG
+// 色条颜色，共256色
+#include "scales/blackbody.c"
+#include "scales/contrast.c"
+#include "scales/rainbow.c"
+#include "scales/skyline.c"
 
 // Storage for measurement data. (No idea why are the buffers randomly mixed in two unions, but I'm afraid to touch it.)
 // Measurement range is -40 to 300 °C, sensor returns 10 * (x + 40), i.e. 0 to 3400.
@@ -42,7 +48,6 @@ UnionData data;
 UnionData2 data2;
 
 float Ta;
-float emissivity = 0.95;
 
 paramsMLX90640 mlx90640;
 FATFS fs;
@@ -60,44 +65,47 @@ usbd_core_handle_struct  usb_device_dev =
 
 // Define available UI modes
 #ifdef BMP_SAVE
-enum {UI_START, UI_SNAPSHOT = UI_START, UI_FPS, UI_SCALE, UI_RANGE, UI_EMIS, UI_USB, UI_END} ui_mode = UI_SNAPSHOT;
+enum {UI_START, UI_SNAPSHOT = UI_START, UI_FPS, UI_SCALE, UI_RANGE, UI_EMIS, UI_USB, UI_END} ui_mode = UI_SCALE;
 #else
-enum {UI_START, UI_FPS = UI_START, UI_SCALE, UI_RANGE, UI_EMIS, UI_USB, UI_END, UI_SNAPSHOT} ui_mode = UI_FPS;
+enum {UI_START, UI_FPS = UI_START, UI_SCALE, UI_RANGE, UI_EMIS, UI_USB, UI_END, UI_SNAPSHOT} ui_mode = UI_SCALE;
 #endif
 
-// Load color maps in RGB565 format. 0..253 = temperature → color map, 254 = GUI FG, 255 = GUI BG
-// 色条颜色，共256色
-#include "scales/blackbody.c"
-#include "scales/contrast.c"
-#include "scales/rainbow.c"
-#include "scales/skyline.c"
-
-// Define the cycle of preset values selectable in each mode
+// Define the cycle of preset values selectable in each mode, and their default values.
 enum {CM_START, CM_SKYLINE = UI_START, CM_BLACKBODY, CM_CONTRAST, CM_RAINBOW, CM_END} colormap = CM_SKYLINE;
-enum {RAN_START, RAN_AUTO = RAN_START, RAN_COLD, RAN_ROOM, RAN_WATER, RAN_BOIL, RAN_MAX, RAN_END} range = RAN_AUTO;
+uint16_t *camColors = (uint16_t*)&(skyline.pixel_data[0]);	// color mapping lookup table
+
+enum {RAN_START, RAN_AUTO = RAN_START, RAN_ROOM, RAN_WATER, RAN_MAX, RAN_COLD, RAN_BOIL, RAN_END} range = RAN_ROOM;
+int16_t range_low = 10;										// low and high limit for a fixed range
+int16_t range_high = 40;									// (anything under -40 means automatic range)
+
 enum {EM_START, EM_WATER = EM_START, EM_SKIN, EM_MAX, EM_METAL, EM_ALOX, EM_40, EM_60, EM_SNOW, EM_PTFE, EM_PAINT,
 	EM_LIME, EM_PLANT, EM_END} emindex = EM_WATER;
+float emissivity = 0.96;
 
-// Configured values for external use
+// Menu values for use in display drawing funciton
 const char *menu_text = "    ";
 uint8_t menu_tweak = 0;
 const char *menu_value = "    ";
 
-uint16_t *camColors = (uint16_t*)&(skyline.pixel_data[0]);	// color mapping lookup table
-int16_t range_low = -100;									// low and high limit for a fixed range
-int16_t range_high = -100;									// (anything under -40 means automatic range)
 
+// Get temperature readings from sensor
 void update_data() {
-	MLX90640_GetFrameData(MLX90640_ADDR, data.mlx90640_Zoom10);
+	MLX90640_GetFrameData(MLX90640_ADDR, data.mlx90640_Zoom10);	// 193k cycles (16.2 ms)
 	Ta = MLX90640_GetTa(data.mlx90640_Zoom10, &mlx90640);	// 读取MLX90640 外壳温度 / Get ambient temperature
 #ifdef DRAWING_TEST
-	for (uint16_t i = 0; i < 768/2; i++) data2.mlx90640To[i] = i * 10;
-	for (uint16_t i = 768/2; i < 768; i++) data2.mlx90640To[i] = 7680 - i * 10;
+	for (uint16_t i = 0; i < 768 / 2; i++) data2.mlx90640To[i] = i * 10;
+	for (uint16_t i = 768 / 2; i < 768; i++) data2.mlx90640To[i] = 7680 - i * 10;
 #else
-	MLX90640_CalculateTo(data.mlx90640_Zoom10, &mlx90640, emissivity , Ta - TA_SHIFT, data2.mlx90640To);
+	// Calculate temperature output based on raw measured data (ultra slow: 1.6M cycles / 137 ms).
+	// MLX90640_CalculateTo(data.mlx90640_Zoom10, &mlx90640, emissivity , Ta - TA_SHIFT, data2.mlx90640To);
+	// Do the same, but using optimized code (mainly pow() and sqrt() operations; about 26 ms).
+	MLX90640_CalculateToOpt(data.mlx90640_Zoom10, &mlx90640, emissivity , Ta - TA_SHIFT, data2.mlx90640To);
 #endif
 }
 
+#ifdef PROFILE
+int16_t sensor_diff = 0;
+#endif
 
 int main(void) {
 	uint16_t statusRegister;
@@ -140,19 +148,25 @@ int main(void) {
 #endif
 
 	while (1) {
-		// if there are new data available, read them out, compute T out, and draw result to display
-		MLX90640_I2CRead(MLX90640_ADDR, 0x8000, 1, &statusRegister);
+		// If there are new data available, read them out, compute T out, and draw result to display
+		MLX90640_I2CRead(MLX90640_ADDR, 0x8000, 1, &statusRegister);	// ~1700 cycles / 0.14 ms
 		if (statusRegister & 0x0008) {
-			update_data();
+		#ifdef PROFILE
+			SysTick->VAL = 0;
+		#endif
+			update_data();		// about 42 ms
+		#ifdef PROFILE
+			sensor_diff = (0xFFFFFF - SysTick->VAL) / 11888;
+		#endif
 			// Optional filtering of bad pixels or outliers (hacked to work with uint32_t instead of float).
 			// (Useless? My sensor reports all pixels are perfect, even though there is one obvious bad outlier area..)
 			//MLX90640_BadPixelsCorrection(mlx90640.brokenPixels, data2.mlx90640To, 1, &mlx90640);
 			//MLX90640_BadPixelsCorrection(mlx90640.outlierPixels, data2.mlx90640To, 1, &mlx90640);
-			//Disp_TempPic();	// slightly faster (85 ms?), but bigger by ~2k
-			Disp_TempNew();		// around 90 ms, uses function calls for better readability
+			//Disp_TempPic();	// slightly faster (28 ms?), but bigger by ~2k
+			Disp_TempNew();		// around 30 ms, uses function calls for better readability
 		}
 
-		// Update UI text if any button was pressed in the previous frame.
+		// Update UI text if any button was pressed in the previous frame. (All UI ~10 cycles when nothing is pressed.)
 		if (action_pressed || menu_pressed) {
 			switch (ui_mode) {
 			#ifdef BMP_SAVE

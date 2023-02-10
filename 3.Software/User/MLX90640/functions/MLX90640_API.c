@@ -394,6 +394,159 @@ void MLX90640_CalculateTo(uint16_t *frameData, const paramsMLX90640 *params, flo
 	}
 }
 
+
+//------------------------------------------------------------------------------
+
+// Magical Square Root Implementation In Quake III (John Carmack, license GPL-2.0)
+// https://web.archive.org/web/20111227173126/http://www.codemaestro.com/reviews/9
+float SRF(float number)
+{
+	long i;
+	float x, y;
+	const float f = 1.5F;
+
+	x = number * 0.5F;
+	y = number;
+	i = *(long*)&y;
+	i = 0x5f3759df - (i >> 1);
+	y = *(float*)&i;
+	y = y * (f - (x * y * y));
+	y = y * (f - (x * y * y));
+	return number * y;
+}
+
+void MLX90640_CalculateToOpt(
+	uint16_t* frameData, const paramsMLX90640* params, float emissivity, float tr, uint16_t* result)
+{
+	float vdd;
+	float ta;
+	float ta4;
+	float tr4;
+	float taTr;
+	float gain;
+	float irDataCP[2];
+	float irData;
+	float alphaCompensated;
+
+	uint8_t mode;
+	int8_t ilPattern;
+	int8_t chessPattern;
+	int8_t pattern;
+	int8_t conversionPattern;
+	float Sx;
+	float To;
+	float alphaCorrR[4];
+	int8_t range;
+	uint16_t subPage;
+
+	subPage = frameData[833];
+	vdd = MLX90640_GetVdd(frameData, params);
+	ta = MLX90640_GetTa(frameData, params);
+	ta4 = pow((double)(ta + 273.15f), (double)4);
+	tr4 = pow((double)(tr + 273.15f), (double)4);
+	taTr = tr4 - (tr4 - ta4) / emissivity;
+
+	alphaCorrR[0] = 1 / (1 + params->ksTo[0] * 40);
+	alphaCorrR[1] = 1;
+	alphaCorrR[2] = (1 + params->ksTo[2] * params->ct[2]);
+	alphaCorrR[3] = alphaCorrR[2] * (1 + params->ksTo[3] * (params->ct[3] - params->ct[2]));
+
+	//------------------------- Gain calculation -----------------------------------
+	gain = frameData[778];
+	if (gain > 32767) { gain = gain - 65536; }
+
+	gain = params->gainEE / gain;
+
+	//-------------------- Temperature out calculation -----------------------------
+	mode = (frameData[832] & 0x1000) >> 5;
+
+	irDataCP[0] = frameData[776];
+	irDataCP[1] = frameData[808];
+	for (int i = 0; i < 2; i++) {
+		if (irDataCP[i] > 32767) { irDataCP[i] = irDataCP[i] - 65536; }
+		irDataCP[i] = irDataCP[i] * gain;
+	}
+	irDataCP[0] =
+		irDataCP[0] - params->cpOffset[0] * (1 + params->cpKta * (ta - 25)) * (1 + params->cpKv * (vdd - 3.3f));
+	if (mode == params->calibrationModeEE) {
+		irDataCP[1] =
+			irDataCP[1] - params->cpOffset[1] * (1 + params->cpKta * (ta - 25)) * (1 + params->cpKv * (vdd - 3.3f));
+	} else {
+		irDataCP[1] = irDataCP[1] -
+			(params->cpOffset[1] + params->ilChessC[0]) * (1 + params->cpKta * (ta - 25)) *
+				(1 + params->cpKv * (vdd - 3.3f));
+	}
+
+	// Prepare reused computations before the loop
+	const float ta25 = ta - 25;
+	const float vdd33 = vdd - 3.3f;
+	const float irdata_minus = params->tgc * irDataCP[subPage];
+	const float alpha_minus = params->tgc * params->cpAlpha[subPage];
+	const float alpha_mul = (1 + params->KsTa * (ta25));
+	const float to_mul = (1 - params->ksTo[1] * 273.15f);
+
+	for (int pixelNumber = 0; pixelNumber < 768; pixelNumber++) {
+		// Power-or-two / and * could be converted to bit shifts, but compiler does that well at -O2.
+		ilPattern = pixelNumber / 32 - (pixelNumber / 64) * 2;
+		conversionPattern = ((pixelNumber + 2) / 4 - (pixelNumber + 3) / 4 + (pixelNumber + 1) / 4 - pixelNumber / 4) *
+			(1 - 2 * ilPattern);
+
+		if (mode == 0) {
+			pattern = ilPattern;
+		} else {
+			chessPattern = ilPattern ^ (pixelNumber - (pixelNumber / 2) * 2);
+			pattern = chessPattern;
+		}
+
+		if (pattern == frameData[833]) {
+			irData = frameData[pixelNumber];				 // 11 cycles (at -O0)
+			if (irData > 32767) { irData = irData - 65536; } // 3
+			irData = irData * gain;							 // 24
+			irData = irData -								 // 105 (85 with precomputed constants)
+				params->offset[pixelNumber] * (1 + params->kta[pixelNumber] * (ta25)) *
+					(1 + params->kv[pixelNumber] * (vdd33));
+			if (mode != params->calibrationModeEE) { // 5
+				irData = irData + params->ilChessC[2] * (2 * ilPattern - 1) - params->ilChessC[1] * conversionPattern;
+			}
+
+			irData = irData / emissivity;	// 32
+			irData = irData - irdata_minus; // 12 (7)
+
+			// A: 192 cycles from the start of the loop (74k or 6.2 ms total); improved to 172 (5.6 ms) by constants.
+
+			// Typical value is around 4e-8, so to store it as fixed point, multiplication by at least 2^30 is needed.
+			alphaCompensated = (params->alpha[pixelNumber] - alpha_minus) * alpha_mul; // 68 (20)
+
+			Sx = alphaCompensated * alphaCompensated * alphaCompensated; // 18
+			Sx = Sx * (irData + alphaCompensated * taTr);				 // 23
+			Sx = SRF(SRF(Sx)) * params->ksTo[1];						 // 500, improved to 171 by SRF
+
+			To = SRF(SRF(irData / (alphaCompensated * to_mul + Sx) + taTr)) - 273.15f; // 570 (547 const, 224 SRF)
+
+			// B: 1176 cycles from A, total 38 ms; constants improved to 1105 (35.6 ms); SRF further to 456 (14.7 ms).
+
+			if (To < params->ct[1]) {
+				range = 0;
+			} else if (To < params->ct[2]) {
+				range = 1;
+			} else if (To < params->ct[3]) {
+				range = 2;
+			} else {
+				range = 3;
+			}
+
+			To = SRF(SRF(irData /
+						 (alphaCompensated * alphaCorrR[range] * (1 + params->ksTo[range] * (To - params->ct[range]))) +
+					 taTr)) -
+				273.15;
+
+			result[pixelNumber] = To * 10 + 400;
+
+			// C: 596 cycles from B (19.3 ms total), improved to 307 (9.9 ms total) by constants and SRF.
+		}
+	}
+}
+
 //------------------------------------------------------------------------------
 
 void MLX90640_GetImage(uint16_t *frameData, const paramsMLX90640 *params, float *result)
