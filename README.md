@@ -25,7 +25,7 @@ My goal is simply to make the firmware a bit more polished, flexible and up to d
 	- sources cleaned up a bit and converted to UTF-8
 	- reduced code size to fit all features under the linker limit of Keil v5 MDK non-commercial version
 	- new drawing function (more maintainable and flexible)
-	- performance optimizations (maximum achievable refresh rate increased from ~5.5 Hz to ~13.8 Hz)
+	- performance optimizations (maximum achievable refresh rate increased from ~5.5 Hz to ~14.9 Hz)
 
 ## Known issues
  - BPM saving is broken (files contain only blue color or are otherwise incomplete)

@@ -20,8 +20,8 @@ const uint8_t Pos_x[] = {159,155,150,145,140,134,129,124,119,114,109,103,98, 93,
 const uint8_t Pos_y[] = {0,  5,  10, 16, 21, 26, 31, 37, 42, 47, 52, 57, 63, 68, 73, 78, 84, 89, 94, 99, 104,110,115,119};
 
 uint16_t max, min;	// Maximum and minimum value found in current frame (global to avoid redundant parameters)
-uint16_t emax, emin;// Effective maximum and minimum value (may be overriden by a fixed range)
-uint16_t scale;		// How many steps of the color scale correspond to one step of To (0.1 °C)
+uint32_t emax, emin;// Effective maximum and minimum value (may be overriden by a fixed range)
+uint32_t scale;		// How many steps of the color scale correspond to one step of To (0.1 °C)
 
 #ifdef PROFILE
 int16_t diff = 0;
@@ -547,10 +547,10 @@ void Disp_TempPic(void)
 // Draw specified lines of the thermal image to the display buffer or directly to the display.
 // Performs bilinear interpolation from the 32x24 to 320x240 pixels and maps temperature values to colors.
 void draw_thermal(uint8_t start, uint8_t end, bool direct) {
-	uint16_t dst_x, dst_y;
-	uint16_t src_x, src_y;
-	uint16_t src_color, weight_x[2], weight_y[2];
-	uint16_t dst_color, dst_addr;
+	uint32_t dst_x, dst_y;
+	uint32_t src_x, src_y;
+	uint32_t src_color, weight_x[2], weight_y[2];
+	uint32_t dst_color, dst_addr;
 
 	if (!direct && end - start + 1 > 10) {
 		for (dst_x = 0; dst_x < 2 * DST_MAX_X; dst_x++) {
@@ -589,12 +589,13 @@ void draw_thermal(uint8_t start, uint8_t end, bool direct) {
 			} else if (dst_color > emax) {
 				dst_color = 253;
 			} else {
-				dst_color = ((dst_color - emin) * scale) / 200;
+				dst_color = ((dst_color - emin) * scale) / 256;
 			}
 
 			// Drawing is done at half resolution, each pixel and line is duplicated
+			// (unless in direct drawing mode, in which case duplication happens more efficiently later)
 			data.DisBuf[dst_addr++] = dst_color;
-			data.DisBuf[dst_addr++] = dst_color;
+			if (!direct) data.DisBuf[dst_addr++] = dst_color;
 
 			src_x += SRC_STEP_X;
 		}
@@ -605,13 +606,21 @@ void draw_thermal(uint8_t start, uint8_t end, bool direct) {
 			/*	for (dst_x = 0; dst_x < 2 * DST_MAX_X; dst_x++) {
 					//ILI9341_Write_Data1(camColors[data.DisBuf[dst_x]]);
 				}*/
-				// Load 4 values at the same time (in total about 2 ms faster).
-				for (dst_x = 0; dst_x < 2 * DST_MAX_X; dst_x = dst_x + 4) {
+				// Load 4 values at the same time (in total about 2 ms faster) and duplicate after CAM lookup.
+				for (dst_x = 0; dst_x < DST_MAX_X; dst_x = dst_x + 4) {
 					const uint32_t temp = *((uint32_t*)(&data.DisBuf[dst_x]));
-					ILI9341_Write_Data1(camColors[(temp & 0xff)]);
-					ILI9341_Write_Data1(camColors[(temp >> 8) & 0xff]);
-					ILI9341_Write_Data1(camColors[(temp >> 16) & 0xff]);
-					ILI9341_Write_Data1(camColors[(temp >> 24)]);
+					const uint32_t w1 = camColors[(temp & 0xff)];
+					const uint32_t w2 = camColors[(temp >> 8) & 0xff];
+					const uint32_t w3 = camColors[(temp >> 16) & 0xff];
+					const uint32_t w4 = camColors[(temp >> 24)];
+					ILI9341_Write_Data1(w1);
+					ILI9341_Write_Data1(w1);
+					ILI9341_Write_Data1(w2);
+					ILI9341_Write_Data1(w2);
+					ILI9341_Write_Data1(w3);
+					ILI9341_Write_Data1(w3);
+					ILI9341_Write_Data1(w4);
+					ILI9341_Write_Data1(w4);
 				}
 			}
 			dst_addr = 0;	// Reset the buffer so it does not overflow (direct writes tend to be long)
@@ -679,8 +688,8 @@ void Disp_TempNew(void)
 	}
 
 	// Set the temperature scale: how many steps of the color scale correspond to one step of To (0.1 °C).
-	// (Only 253 colors are available for temperature mapping; multiplied by 200 for increased precision).
-	scale = 50600 / (emax - emin);
+	// (Only 253 colors are available for temperature mapping; multiplied by 256 for increased precision).
+	scale = 64768 / (emax - emin);
 
 	// Prepare the display to receive a new full frame
 	LCD_setwindow(0, 0, 319, 239);
