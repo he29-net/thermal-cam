@@ -11,13 +11,14 @@ My goal is simply to make the firmware a bit more polished, flexible and up to d
 	- buttons now control a simple menu
 		- left button selects action, right button activates it / cycles values
 	- runtime selectable refresh rate
-		- default 8 Hz for faster updates; down to 1 Hz for lower noise
+		- from 1 Hz (lower noise) up to 16 Hz (faster updates); default 8 Hz as a compromise
 	- runtime selectable emissivity
 		- 12 presets for common types of materials
 	- runtime selectable color scales (black-body, blue-red-white, rainbow, high-contrast)
 	- runtime selectable temperature ranges (automatic + 5 fixed range presets)
  - fixes:
 	- fixed glitches and improved accuracy at high temperatures (tested up to 600 °C)
+	- improved stability of automatic range (min / max use a mild averaging)
  - other changes:
 	- battery indicator reworked and moved to the left to make space for action selector
 	- voltage considered "full" changed from 4.2 V to 3.8 V (Li-ion drops off fast, despite still being almost full)
@@ -25,11 +26,10 @@ My goal is simply to make the firmware a bit more polished, flexible and up to d
 	- sources cleaned up a bit and converted to UTF-8
 	- reduced code size to fit all features under the linker limit of Keil v5 MDK non-commercial version
 	- new drawing function (more maintainable and flexible)
-	- performance optimizations (maximum achievable refresh rate increased from ~5.5 Hz to ~14.9 Hz)
+	- performance optimizations (maximum achievable refresh rate increased from ~5.5 Hz to 16 Hz)
 
 ## Known issues
  - BPM saving is broken (files contain only blue color or are otherwise incomplete)
- - 16 FPS display rate is enabled, but there is not yet quite enough performance for perfect display
  - emissivity values 1.00 and 0.04 are displayed incorrectly
  - stuck at black screen after activating USB mode when USB is not connected
 

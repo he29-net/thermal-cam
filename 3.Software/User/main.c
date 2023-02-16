@@ -20,15 +20,14 @@
 		- Others in main():	4764 B (17056 - 12292, everything outside the data and data2 unions)
 
  Considerations:
-	- Code: non-commercial version of linker limits code size to 32k
-	- RO-data: are.. what and where exactly?
-	- RW-data: are.. what and where exactly?
-	- ZI-data: apparently stands for Zero Initialized data; how it differs from RW?
+	- Code: instructions stored in flash; non-commercial version of linker limits code size to 32k
+	- RO-data: are constant data stored in the program memory (and thus contribute to total Code size)
+	- RW-data: are data stored in SRAM, but initialized from program memory
+	- ZI-data: are data stored in SRAM, but not initialized (Zero Initialized), so they do not take any Code space
 
  Todo:
-	- BPM saving is currently broken (why? how? Only blue color seems to be saved...)
+	- BMP saving is currently broken (why? how? Only blue color seems to be saved...)
 	- no way out of USB mode in case USB isn't connected (needs hard reset instead)
-	- find a way to save 10 more ms to allow 16 Hz refresh rate
 */
 
 #include "bsp.h"
@@ -74,9 +73,9 @@ enum {UI_START, UI_FPS = UI_START, UI_SCALE, UI_RANGE, UI_EMIS, UI_USB, UI_END, 
 enum {CM_START, CM_SKYLINE = UI_START, CM_BLACKBODY, CM_CONTRAST, CM_RAINBOW, CM_END} colormap = CM_SKYLINE;
 uint16_t *camColors = (uint16_t*)&(skyline.pixel_data[0]);	// color mapping lookup table
 
-enum {RAN_START, RAN_AUTO = RAN_START, RAN_ROOM, RAN_WATER, RAN_MAX, RAN_COLD, RAN_BOIL, RAN_END} range = RAN_ROOM;
-int16_t range_low = 10;										// low and high limit for a fixed range
-int16_t range_high = 40;									// (anything under -40 means automatic range)
+enum {RAN_START, RAN_AUTO = RAN_START, RAN_ROOM, RAN_WATER, RAN_MAX, RAN_COLD, RAN_BOIL, RAN_END} range = RAN_AUTO;
+int16_t range_low = -40;									// low and high limit for a fixed range
+int16_t range_high = -40;									// (anything under -40 means automatic range)
 
 enum {EM_START, EM_WATER = EM_START, EM_SKIN, EM_MAX, EM_METAL, EM_ALOX, EM_40, EM_60, EM_SNOW, EM_PTFE, EM_PAINT,
 	EM_LIME, EM_PLANT, EM_END} emindex = EM_WATER;
@@ -87,11 +86,13 @@ const char *menu_text = "    ";
 uint8_t menu_tweak = 0;
 const char *menu_value = "    ";
 
+uint8_t refresh_rate = DefaultRefreshRate;
+uint16_t statusRegister = 0;
 
 // Get temperature readings from sensor
 void update_data() {
-	MLX90640_GetFrameData(MLX90640_ADDR, data.mlx90640_Zoom10);	// 193k cycles (16.2 ms)
-	Ta = MLX90640_GetTa(data.mlx90640_Zoom10, &mlx90640);	// 读取MLX90640 外壳温度 / Get ambient temperature
+	MLX90640_GetFrameData(MLX90640_ADDR, data.mlx90640_Zoom10); // takes around 11 ms
+	Ta = MLX90640_GetTa(data.mlx90640_Zoom10, &mlx90640);		// 读取MLX90640 外壳温度 / Get ambient temperature
 #ifdef DRAWING_TEST
 	for (uint16_t i = 0; i < 768 / 2; i++) data2.mlx90640To[i] = i * 10;
 	for (uint16_t i = 768 / 2; i < 768; i++) data2.mlx90640To[i] = 7680 - i * 10;
@@ -103,16 +104,26 @@ void update_data() {
 #endif
 }
 
+// Get rid of the the first few images after initialization or configuration change
+// (all they contain are variants of the checker pattern)
+void cleanup() {
+#ifdef CLEANUP
+	for (int i = 0; i < 3; i++) {
+		while (!(statusRegister & 0x0008)) {
+			MLX90640_I2CRead(MLX90640_ADDR, 0x8000, 1, &statusRegister);
+		}
+		MLX90640_GetFrameData(MLX90640_ADDR, data.mlx90640_Zoom10);
+	}
+#endif
+}
+
 #ifdef PROFILE
 int16_t sensor_diff = 0;
 #endif
 
 int main(void) {
-	uint16_t statusRegister;
 	bool menu_pressed = true;
 	bool action_pressed = false;
-
-	uint8_t refresh_rate = DefaultRefreshRate;
 
 	delay_1ms(200);
 	mGPIO_Init();
@@ -131,9 +142,7 @@ int main(void) {
 	MLX90640_ExtractParameters(data.mlx90640_Zoom10, &mlx90640);
 
 #ifdef CLEANUP
-	// get rid of the the first few images (all they contain are variants of the checker pattern)
-	// (takes up precious space and does not matter that much → disable for now..)
-	for (statusRegister = 0; statusRegister < 4; statusRegister++) update_data();
+	cleanup();
 #endif
 
 #ifdef PROFILE
@@ -154,7 +163,7 @@ int main(void) {
 		#ifdef PROFILE
 			SysTick->VAL = 0;
 		#endif
-			update_data();		// about 42 ms
+			update_data();		// about 37 ms
 		#ifdef PROFILE
 			sensor_diff = (0xFFFFFF - SysTick->VAL) / 11888;
 		#endif
@@ -162,8 +171,7 @@ int main(void) {
 			// (Useless? My sensor reports all pixels are perfect, even though there is one obvious bad outlier area..)
 			//MLX90640_BadPixelsCorrection(mlx90640.brokenPixels, data2.mlx90640To, 1, &mlx90640);
 			//MLX90640_BadPixelsCorrection(mlx90640.outlierPixels, data2.mlx90640To, 1, &mlx90640);
-			//Disp_TempPic();	// slightly faster (28 ms?), but bigger by ~2k
-			Disp_TempNew();		// around 30 ms, uses function calls for better readability
+			display_image(); 	// around 25 ms
 		}
 
 		// Update UI text if any button was pressed in the previous frame. (All UI ~10 cycles when nothing is pressed.)
@@ -269,15 +277,14 @@ int main(void) {
 			#ifdef BMP_SAVE
 				case UI_SNAPSHOT:	// save a BPM snapshot of the current display buffer
 					bmp_encode();
-				#ifdef CLEANUP
-					update_data();
-				#endif
+					cleanup();
 					break;
 			#endif
 				case UI_FPS:		// cycle through available frame rates
 					refresh_rate++;
 					if (refresh_rate > MaximumRefreshRate) refresh_rate = MinimumRefreshRate;
 					MLX90640_SetRefreshRate(MLX90640_ADDR, refresh_rate);
+					cleanup();
 					break;
 
 				case UI_SCALE:		// cycle through available color maps

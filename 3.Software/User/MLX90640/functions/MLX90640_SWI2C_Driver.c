@@ -27,8 +27,6 @@
  
 #include "MLX90640_I2C_Driver.h"
 
-//#define Wait(freqCnt) freqCnt++
-
 int  I2CSendByte(int8_t);
 void I2CReadBytes(int, char *);
 void I2CStart(void);
@@ -37,10 +35,17 @@ void I2CRepeatedStart(void);
 void I2CSendACK(void);
 void I2CSendNack(void);
 int  I2CReceiveAck(void);
-void Wait(int);
 
-//int freqCnt = 1;
-#define freqCnt 1
+// Inline implementation of Wait(), with better granularity and lower minimum delay
+const int freqCnt = 6;	// default delay
+
+#define Wait(cnt) \
+	{ \
+		int work = 0; \
+		work = cnt; \
+		while (work) \
+			work--; \
+	}
 
 void MLX90640_I2CInit()
 {   
@@ -111,11 +116,6 @@ int MLX90640_I2CRead(uint8_t slaveAddr, uint16_t startAddress,uint16_t nMemAddre
     return 0;
   
 } 
-
-//void MLX90640_I2CFreqSet(int freq)
-//{
-//    freqCnt = freq>>1;
-//}
 
 int MLX90640_I2CWrite(uint8_t slaveAddr, uint16_t writeAddress, uint16_t data)
 {
@@ -191,47 +191,34 @@ int I2CSendByte(int8_t data)
    return ack; 
 }
 
-void I2CReadBytes(int nBytes, char *dataP)
+void I2CReadBytes(int nBytes, char* dataP)
 {
-    char data;
-    for(int j=0;j<nBytes;j++)
-    {
-        Wait(freqCnt);
-        IIC_SDA_HIGH();    
-        
-        data = 0;
-        for(int i=0;i<8;i++){
-            Wait(freqCnt);
-            IIC_SCL_HIGH();
-            Wait(freqCnt);
-            data = data<<1;
-            if(IIC_SDA_READ()){
-                data = data+1;  
-            }
-            Wait(freqCnt);
-            IIC_SCL_LOW();
-            Wait(freqCnt);
-        }  
-        
-        if(j == (nBytes-1))
-        {
-            I2CSendNack();
-        }
-        else
-        {                  
-            I2CSendACK();
-        }
-            
-        *(dataP+j) = data; 
-    }    
-    
+	char data;
+	for (int j = 0; j < nBytes; j++) {
+		// Wait(freqCnt);	// delay ensured by the for loop checks
+		IIC_SDA_HIGH();
+
+		data = 0;
+		for (int i = 0; i < 8; i++) {
+			Wait(10);			// higher than default because of missing delay at the end; found by trial / error
+			IIC_SCL_HIGH();
+			//Wait(freqCnt);	// delay ensured by the data shift
+			data = data << 1;
+			if (IIC_SDA_READ()) { data = data + 1; }
+			//Wait(freqCnt);
+			IIC_SCL_LOW();
+			//Wait(freqCnt);	// delay ensured at the start of the loop and by the following if
+		}
+
+		if (j == (nBytes - 1)) {
+			I2CSendNack();
+		} else {
+			I2CSendACK();
+		}
+
+		*(dataP + j) = data;
+	}
 }
-        
-void Wait(int t)
-{
-    int i;
-    for(i = 0;i<t;i++);
-} 
 
 void I2CStart(void)
 {

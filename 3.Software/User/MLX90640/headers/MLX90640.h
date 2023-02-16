@@ -22,11 +22,11 @@
 
 extern float Ta;
 extern float emissivity;
+extern uint8_t refresh_rate;
 
 void draw_thermal(uint8_t start, uint8_t end, bool direct);
 void write_buffer(uint8_t lines);
-void Disp_TempPic(void);
-void Disp_TempNew(void);
+void display_image(void);
 
 void Buf_Showchar(unsigned int x, unsigned int y,unsigned char c, unsigned int color,uint8_t UpOrDn);
 void Buf_ShowString(unsigned int x, unsigned int y,const char *s, unsigned int color,uint8_t UpOrDn);
